@@ -34,7 +34,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] Alembic migrations wired into the `backend` container
 - [x] Config management via environment variables (dev/prod split)
 - [x] Password hashing utility (bcrypt)
-- [ ] Credential encryption utility for stored SSH passwords (e.g. `cryptography`'s Fernet, key sourced from env)
+- [x] Credential encryption utility for stored SSH passwords (e.g. `cryptography`'s Fernet, key sourced from env)
 - [ ] **Exit criteria verified:** migrations run cleanly against the `db` container; models have unit test coverage (hashing round-trips, encryption round-trips).
 
 ### M2 — Auth API
