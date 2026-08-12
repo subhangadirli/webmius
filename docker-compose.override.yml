@@ -7,7 +7,7 @@ services:
     volumes:
       - ./backend:/app:Z
     environment:
-      FLASK_DEBUG: "1"
+      FLASK_ENV: development
     command: python wsgi.py
 
   frontend:
