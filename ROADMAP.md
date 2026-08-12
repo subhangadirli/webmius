@@ -22,7 +22,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 ### M0 — Repo & Docker Scaffolding
 
 - [x] `.gitignore` / `.dockerignore`
-- [ ] Minimal Flask app factory with a `GET /health` route, `backend/Dockerfile`
+- [x] Minimal Flask app factory with a `GET /health` route, `backend/Dockerfile`
 - [ ] Minimal React app shell that calls `/health` and renders the result, `frontend/Dockerfile`
 - [ ] `docker-compose.yml` with `backend` (Flask), `frontend` (React/Vite), and `db` (PostgreSQL) services
 - [ ] `docker-compose.override.yml` for local dev (bind mounts, hot reload) + `.env.example` documenting required env vars (DB creds, secret keys)
