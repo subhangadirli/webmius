@@ -21,92 +21,81 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M0 — Repo & Docker Scaffolding
 
-* `docker-compose.yml` with `backend` (Flask), `frontend` (React/Vite), and `db` (PostgreSQL) services
-* `docker-compose.override.yml` for local dev (bind mounts, hot reload)
-* `backend/Dockerfile` and `frontend/Dockerfile`
-* `.env.example` documenting required env vars (DB creds, secret keys)
-* Minimal Flask app factory with a `GET /health` route
-* Minimal React app shell that calls `/health` and renders the result
-* `.gitignore` / `.dockerignore`
-
-**Exit criteria:** `docker compose up` brings up all three services; the frontend successfully displays the backend's health status.
+- [ ] `.gitignore` / `.dockerignore`
+- [ ] Minimal Flask app factory with a `GET /health` route, `backend/Dockerfile`
+- [ ] Minimal React app shell that calls `/health` and renders the result, `frontend/Dockerfile`
+- [ ] `docker-compose.yml` with `backend` (Flask), `frontend` (React/Vite), and `db` (PostgreSQL) services
+- [ ] `docker-compose.override.yml` for local dev (bind mounts, hot reload) + `.env.example` documenting required env vars (DB creds, secret keys)
+- [ ] **Exit criteria verified:** `docker compose up` brings up all three services; the frontend successfully displays the backend's health status.
 
 ### M1 — Backend Foundation & Data Layer
 
-* SQLAlchemy models: `User`, `SSHConnection` (per DOCS.md §6)
-* Alembic migrations wired into the `backend` container
-* Config management via environment variables (dev/prod split)
-* Password hashing utility (bcrypt)
-* Credential encryption utility for stored SSH passwords (e.g. `cryptography`'s Fernet, key sourced from env)
-
-**Exit criteria:** migrations run cleanly against the `db` container; models have unit test coverage (hashing round-trips, encryption round-trips).
+- [ ] SQLAlchemy models: `User`, `SSHConnection` (per DOCS.md §6)
+- [ ] Alembic migrations wired into the `backend` container
+- [ ] Config management via environment variables (dev/prod split)
+- [ ] Password hashing utility (bcrypt)
+- [ ] Credential encryption utility for stored SSH passwords (e.g. `cryptography`'s Fernet, key sourced from env)
+- [ ] **Exit criteria verified:** migrations run cleanly against the `db` container; models have unit test coverage (hashing round-trips, encryption round-trips).
 
 ### M2 — Auth API
 
-* `POST /api/register`
-* `POST /api/login`
-* Session/JWT-based auth middleware for protected routes
-
-**Exit criteria:** pytest coverage for register/login happy paths and failure cases (duplicate username/email, wrong password, missing fields).
+- [ ] `POST /api/register`
+- [ ] `POST /api/login`
+- [ ] Session/JWT-based auth middleware for protected routes
+- [ ] **Exit criteria verified:** pytest coverage for register/login happy paths and failure cases (duplicate username/email, wrong password, missing fields).
 
 ### M3 — Frontend Foundation & Auth UI
 
-* React Router setup, API client wrapper
-* Login and Register pages
-* Protected-route wrapper / auth context
-* Basic dashboard layout shell (empty state)
-
-**Exit criteria:** manual login/register flow works end-to-end through Docker against the real backend (no mocks).
+- [ ] React Router setup, API client wrapper
+- [ ] Login and Register pages
+- [ ] Protected-route wrapper / auth context
+- [ ] Basic dashboard layout shell (empty state)
+- [ ] **Exit criteria verified:** manual login/register flow works end-to-end through Docker against the real backend (no mocks).
 
 ### M4 — SSH Connections CRUD
 
-* `GET /api/connections`, `POST /api/connections`, `PUT /api/connections/{id}`, `DELETE /api/connections/{id}` (DOCS.md §7)
-* Ownership checks — a user can only read/modify their own connections
-* Frontend: connection list on the dashboard, add/edit/delete forms
-
-**Exit criteria:** pytest API tests for CRUD + ownership enforcement; manual create/edit/delete walkthrough works in the UI.
+- [ ] `GET /api/connections`, `POST /api/connections`, `PUT /api/connections/{id}`, `DELETE /api/connections/{id}` (DOCS.md §7)
+- [ ] Ownership checks — a user can only read/modify their own connections
+- [ ] Frontend: connection list on the dashboard, add/edit/delete forms
+- [ ] **Exit criteria verified:** pytest API tests for CRUD + ownership enforcement; manual create/edit/delete walkthrough works in the UI.
 
 ### M5 — Web Terminal (WebSocket + SSH)
 
-* Flask-SocketIO `/ws/ssh-session` namespace
-* Paramiko-based SSH session bridging (connect, stream stdin/stdout, disconnect)
-* xterm.js terminal component on the frontend
-* Error surfacing for auth failure, unreachable host, dropped connection
-
-**Exit criteria:** from the browser, open a real SSH session to a test container/VM and run commands interactively.
+- [ ] Flask-SocketIO `/ws/ssh-session` namespace
+- [ ] Paramiko-based SSH session bridging (connect, stream stdin/stdout, disconnect)
+- [ ] xterm.js terminal component on the frontend
+- [ ] Error surfacing for auth failure, unreachable host, dropped connection
+- [ ] **Exit criteria verified:** from the browser, open a real SSH session to a test container/VM and run commands interactively.
 
 ### M6 — Security Hardening Pass
 
-* Reverse proxy (Caddy or nginx) added to compose as a "prod-like" profile for TLS termination
-* CSRF protection on state-changing endpoints
-* Rate limiting on auth endpoints
-* Audit: confirm SSH credentials are encrypted at rest end-to-end, cookies are `HttpOnly`/`Secure`/`SameSite`
-
-**Exit criteria:** every item in DOCS.md §8 (Security Considerations) is verifiably satisfied.
+- [ ] Reverse proxy (Caddy or nginx) added to compose as a "prod-like" profile for TLS termination
+- [ ] CSRF protection on state-changing endpoints
+- [ ] Rate limiting on auth endpoints
+- [ ] Audit: confirm SSH credentials are encrypted at rest end-to-end, cookies are `HttpOnly`/`Secure`/`SameSite`
+- [ ] **Exit criteria verified:** every item in DOCS.md §8 (Security Considerations) is verifiably satisfied.
 
 ### M7 — CI & Test Scaffolding
 
-* GitHub Actions workflow: build both Docker images, run backend tests (pytest) and frontend tests (vitest/jest) on push/PR
-
-**Exit criteria:** pipeline is green on a clean clone with no local setup beyond `docker compose`.
+- [ ] GitHub Actions workflow: build both Docker images, run backend tests (pytest) and frontend tests (vitest/jest) on push/PR
+- [ ] **Exit criteria verified:** pipeline is green on a clean clone with no local setup beyond `docker compose`.
 
 ### M8 — MVP Polish & Docs
 
-* UX polish on the connection list and forms; empty/error/loading states
-* `README.md` with a docker-first quickstart (`git clone` → `docker compose up` → login)
-* Reconcile `DOCS.md` with any scope drift that happened during the build
-
-**Exit criteria:** a new user can clone the repo, run one command, and complete the full MVP user flow from DOCS.md §9.
+- [ ] UX polish on the connection list and forms; empty/error/loading states
+- [ ] `README.md` with a docker-first quickstart (`git clone` → `docker compose up` → login)
+- [ ] Reconcile `DOCS.md` with any scope drift that happened during the build
+- [ ] **Exit criteria verified:** a new user can clone the repo, run one command, and complete the full MVP user flow from DOCS.md §9.
 
 ### M9 — Optional / Stretch (Post-MVP)
 
 Not required for MVP completion; pulled from DOCS.md §3 ("Optional") and §12 ("Future Improvements"):
 
-* SSH key-based authentication
-* Tagging / grouping servers
-* Connection history (logs)
-* Role-based access control
-* Full terminal emulation improvements, mobile-friendly UI
+- [ ] SSH key-based authentication
+- [ ] Tagging / grouping servers
+- [ ] Connection history (logs)
+- [ ] Role-based access control
+- [ ] Full terminal emulation improvements, mobile-friendly UI
 
 * * *
 
