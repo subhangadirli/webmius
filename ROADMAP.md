@@ -30,7 +30,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M1 — Backend Foundation & Data Layer
 
-- [ ] SQLAlchemy models: `User`, `SSHConnection` (per DOCS.md §6)
+- [x] SQLAlchemy models: `User`, `SSHConnection` (per DOCS.md §6)
 - [ ] Alembic migrations wired into the `backend` container
 - [x] Config management via environment variables (dev/prod split)
 - [ ] Password hashing utility (bcrypt)

@@ -14,6 +14,8 @@ def create_app(config_object=None):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from . import models  # noqa: F401  (registers models with SQLAlchemy metadata)
+
     from .routes.health import health_bp
     app.register_blueprint(health_bp)
 
