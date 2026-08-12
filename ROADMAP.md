@@ -35,7 +35,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] Config management via environment variables (dev/prod split)
 - [x] Password hashing utility (bcrypt)
 - [x] Credential encryption utility for stored SSH passwords (e.g. `cryptography`'s Fernet, key sourced from env)
-- [ ] **Exit criteria verified:** migrations run cleanly against the `db` container; models have unit test coverage (hashing round-trips, encryption round-trips).
+- [x] **Exit criteria verified:** migrations run cleanly against a freshly wiped `db` container (`flask db upgrade` creates `users`, `ssh_connections`, `alembic_version`); 7/7 pytest cases pass covering bcrypt hash/verify round-trips and Fernet encrypt/decrypt round-trips.
 
 ### M2 — Auth API
 
