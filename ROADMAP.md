@@ -26,7 +26,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] Minimal React app shell that calls `/health` and renders the result, `frontend/Dockerfile`
 - [x] `docker-compose.yml` with `backend` (Flask), `frontend` (React/Vite), and `db` (PostgreSQL) services
 - [x] `docker-compose.override.yml` for local dev (bind mounts, hot reload) + `.env.example` documenting required env vars (DB creds, secret keys)
-- [ ] **Exit criteria verified:** `docker compose up` brings up all three services; the frontend successfully displays the backend's health status.
+- [x] **Exit criteria verified:** `docker compose up` / `podman compose up` brings up all three services; backend `/health` returns `{"status": "ok"}` and the frontend serves successfully. Verified live with `podman compose up --build` (db healthy, backend on :5000, frontend on :5173).
 
 ### M1 — Backend Foundation & Data Layer
 
