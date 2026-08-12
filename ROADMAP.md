@@ -25,7 +25,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] Minimal Flask app factory with a `GET /health` route, `backend/Dockerfile`
 - [x] Minimal React app shell that calls `/health` and renders the result, `frontend/Dockerfile`
 - [x] `docker-compose.yml` with `backend` (Flask), `frontend` (React/Vite), and `db` (PostgreSQL) services
-- [ ] `docker-compose.override.yml` for local dev (bind mounts, hot reload) + `.env.example` documenting required env vars (DB creds, secret keys)
+- [x] `docker-compose.override.yml` for local dev (bind mounts, hot reload) + `.env.example` documenting required env vars (DB creds, secret keys)
 - [ ] **Exit criteria verified:** `docker compose up` brings up all three services; the frontend successfully displays the backend's health status.
 
 ### M1 — Backend Foundation & Data Layer
