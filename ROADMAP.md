@@ -11,7 +11,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ## Guiding Principles
 
-* **Docker-first from day one.** Every milestone must be runnable via `docker compose up`. There is no "install Python/Node locally and hope it matches prod" workflow — the container *is* the dev environment.
+* **Container-first from day one.** Every milestone must be runnable via `docker compose up` **or** `podman compose up` — both are first-class, kept interchangeable by sticking to the standard Compose spec (e.g. `:Z`-labeled bind mounts for SELinux hosts, which Docker safely ignores where SELinux isn't in play). There is no "install Python/Node locally and hope it matches prod" workflow — the container *is* the dev environment.
 * **Secrets are never in plaintext**, even in dev. SSH credentials are encrypted at rest starting with the first milestone that stores them.
 * **Small vertical slices.** Each milestone should produce something runnable end-to-end (even if minimal), rather than large horizontal layers integrated all at once.
 

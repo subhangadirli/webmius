@@ -5,13 +5,13 @@ services:
 
   backend:
     volumes:
-      - ./backend:/app
+      - ./backend:/app:Z
     environment:
       FLASK_DEBUG: "1"
     command: python wsgi.py
 
   frontend:
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app:Z
       - /app/node_modules
     command: npm run dev
