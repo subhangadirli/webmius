@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import { useAuth } from '../auth/AuthContext.jsx'
+import { useAuth } from '../auth/AuthContext.tsx'
 
 function Home() {
   const [status, setStatus] = useState('checking...')

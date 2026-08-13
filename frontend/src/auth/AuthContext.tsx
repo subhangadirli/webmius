@@ -1,10 +1,19 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { api } from '../api/client'
+import type { LoginPayload, RegisterPayload, User } from '../types'
 
-const AuthContext = createContext(null)
+interface AuthContextValue {
+  user: User | null
+  loading: boolean
+  login: (credentials: LoginPayload) => Promise<User>
+  register: (details: RegisterPayload) => Promise<User>
+  logout: () => Promise<void>
+}
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -15,14 +24,14 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const login = useCallback(async (credentials) => {
+  const login = useCallback(async (credentials: LoginPayload) => {
     const loggedInUser = await api.login(credentials)
     setUser(loggedInUser)
     return loggedInUser
   }, [])
 
   const register = useCallback(
-    async (details) => {
+    async (details: RegisterPayload) => {
       await api.register(details)
       return login({ username: details.username, password: details.password })
     },

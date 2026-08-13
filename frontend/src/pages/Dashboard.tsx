@@ -2,18 +2,21 @@ import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import { useAuth } from '../auth/AuthContext.jsx'
-import ConnectionForm from '../components/ConnectionForm.jsx'
-import ConnectionList from '../components/ConnectionList.jsx'
+import { useAuth } from '../auth/AuthContext.tsx'
+import ConnectionForm from '../components/ConnectionForm.tsx'
+import ConnectionList from '../components/ConnectionList.tsx'
+import type { ConnectionPayload, SSHConnection } from '../types'
+
+type FormMode = null | 'create' | SSHConnection
 
 function Dashboard() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
-  const [connections, setConnections] = useState([])
+  const [connections, setConnections] = useState<SSHConnection[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(null)
-  const [formMode, setFormMode] = useState(null) // null | 'create' | connection object
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [formMode, setFormMode] = useState<FormMode>(null)
 
   const loadConnections = async () => {
     setLoading(true)
@@ -21,7 +24,7 @@ function Dashboard() {
     try {
       setConnections(await api.listConnections())
     } catch (err) {
-      setLoadError(err.message)
+      setLoadError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
@@ -36,25 +39,26 @@ function Dashboard() {
     navigate('/login')
   }
 
-  const handleCreate = async (payload) => {
+  const handleCreate = async (payload: ConnectionPayload) => {
     await api.createConnection(payload)
     setFormMode(null)
     await loadConnections()
   }
 
-  const handleUpdate = async (payload) => {
+  const handleUpdate = async (payload: ConnectionPayload) => {
+    if (!formMode || formMode === 'create') return
     await api.updateConnection(formMode.id, payload)
     setFormMode(null)
     await loadConnections()
   }
 
-  const handleDelete = async (connection) => {
+  const handleDelete = async (connection: SSHConnection) => {
     if (!window.confirm(`Delete connection "${connection.name}"?`)) return
     await api.deleteConnection(connection.id)
     await loadConnections()
   }
 
-  const isEditing = formMode && formMode !== 'create'
+  const isEditing = formMode !== null && formMode !== 'create'
 
   return (
     <div className="min-h-screen">
@@ -76,9 +80,9 @@ function Dashboard() {
       <main className="mx-auto max-w-4xl space-y-4 p-6">
         {formMode && (
           <ConnectionForm
-            key={isEditing ? formMode.id : 'create'}
-            isEditing={Boolean(isEditing)}
-            initialValues={isEditing ? formMode : undefined}
+            key={isEditing ? (formMode as SSHConnection).id : 'create'}
+            isEditing={isEditing}
+            initialValues={isEditing ? (formMode as SSHConnection) : undefined}
             onSubmit={isEditing ? handleUpdate : handleCreate}
             onCancel={() => setFormMode(null)}
           />

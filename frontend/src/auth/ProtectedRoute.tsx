@@ -1,7 +1,8 @@
+import type { FC, ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from './AuthContext.jsx'
+import { useAuth } from './AuthContext.tsx'
 
-function ProtectedRoute({ children }) {
+const ProtectedRoute: FC<{ children: ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
 
   if (loading) {

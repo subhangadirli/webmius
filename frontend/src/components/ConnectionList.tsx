@@ -1,4 +1,12 @@
-function ConnectionList({ connections, onEdit, onDelete }) {
+import type { SSHConnection } from '../types'
+
+interface ConnectionListProps {
+  connections: SSHConnection[]
+  onEdit: (connection: SSHConnection) => void
+  onDelete: (connection: SSHConnection) => void
+}
+
+function ConnectionList({ connections, onEdit, onDelete }: ConnectionListProps) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
       {connections.map((connection) => (

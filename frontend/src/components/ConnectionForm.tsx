@@ -1,29 +1,62 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import type { ConnectionPayload, SSHConnection } from '../types'
 
-const emptyForm = { name: '', host: '', port: 22, username: '', password: '' }
+interface FormState {
+  name: string
+  host: string
+  port: string
+  username: string
+  password: string
+}
 
-function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }) {
-  const [form, setForm] = useState({ ...emptyForm, ...initialValues })
-  const [error, setError] = useState(null)
+const emptyForm: FormState = { name: '', host: '', port: '22', username: '', password: '' }
+
+function toFormState(connection?: SSHConnection): FormState {
+  if (!connection) return emptyForm
+  return {
+    name: connection.name,
+    host: connection.host,
+    port: String(connection.port),
+    username: connection.username,
+    password: '',
+  }
+}
+
+interface ConnectionFormProps {
+  initialValues?: SSHConnection
+  onSubmit: (payload: ConnectionPayload) => Promise<void>
+  onCancel: () => void
+  isEditing?: boolean
+}
+
+function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }: ConnectionFormProps) {
+  const [form, setForm] = useState<FormState>(() => toFormState(initialValues))
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleChange = (event) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target
     setForm({ ...form, [name]: name === 'port' ? value.replace(/\D/g, '') : value })
   }
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
     setSubmitting(true)
     try {
-      const payload = { ...form, port: Number(form.port) || 22 }
+      const payload: ConnectionPayload = {
+        name: form.name,
+        host: form.host,
+        username: form.username,
+        port: Number(form.port) || 22,
+        password: form.password,
+      }
       if (isEditing && !payload.password) {
         delete payload.password
       }
       await onSubmit(payload)
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSubmitting(false)
     }

@@ -1,19 +1,20 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext.jsx'
+import { useAuth } from '../auth/AuthContext.tsx'
+import type { RegisterPayload } from '../types'
 
 function Register() {
   const navigate = useNavigate()
   const { register } = useAuth()
-  const [form, setForm] = useState({ username: '', email: '', password: '' })
-  const [error, setError] = useState(null)
+  const [form, setForm] = useState<RegisterPayload>({ username: '', email: '', password: '' })
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleChange = (event) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [event.target.name]: event.target.value })
   }
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError(null)
     setSubmitting(true)
@@ -21,7 +22,7 @@ function Register() {
       await register(form)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message)
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSubmitting(false)
     }
