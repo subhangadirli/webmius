@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext.jsx'
 
 function Register() {
   const navigate = useNavigate()
+  const { register } = useAuth()
   const [form, setForm] = useState({ username: '', email: '', password: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -17,9 +18,8 @@ function Register() {
     setError(null)
     setSubmitting(true)
     try {
-      await api.register(form)
-      await api.login({ username: form.username, password: form.password })
-      navigate('/')
+      await register(form)
+      navigate('/dashboard')
     } catch (err) {
       setError(err.message)
     } finally {

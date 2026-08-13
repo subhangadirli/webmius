@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext.jsx'
 
 function Login() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -17,8 +18,8 @@ function Login() {
     setError(null)
     setSubmitting(true)
     try {
-      await api.login(form)
-      navigate('/')
+      await login(form)
+      navigate('/dashboard')
     } catch (err) {
       setError(err.message)
     } finally {
