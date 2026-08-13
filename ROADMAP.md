@@ -49,7 +49,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] React Router setup, API client wrapper
 - [x] Login and Register pages
 - [x] Protected-route wrapper / auth context
-- [ ] Basic dashboard layout shell (empty state)
+- [x] Basic dashboard layout shell (empty state)
 - [ ] **Exit criteria verified:** manual login/register flow works end-to-end through Docker against the real backend (no mocks).
 
 ### M4 — SSH Connections CRUD

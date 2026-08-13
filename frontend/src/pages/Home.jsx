@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext.jsx'
 
 function Home() {
   const [status, setStatus] = useState('checking...')
+  const { user, loading } = useAuth()
 
   useEffect(() => {
     api
@@ -18,6 +21,24 @@ function Home() {
         <p className="opacity-60">
           Backend status: <strong>{status}</strong>
         </p>
+        {!loading && (
+          <div className="flex justify-center gap-2">
+            {user ? (
+              <Link className="btn preset-filled-primary-500" to="/dashboard">
+                Go to dashboard
+              </Link>
+            ) : (
+              <>
+                <Link className="btn preset-filled-primary-500" to="/login">
+                  Log in
+                </Link>
+                <Link className="btn preset-tonal" to="/register">
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
