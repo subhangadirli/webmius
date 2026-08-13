@@ -26,4 +26,8 @@ export const api = {
   login: (data) => request('/api/login', { method: 'POST', body: JSON.stringify(data) }),
   logout: () => request('/api/logout', { method: 'POST' }),
   me: () => request('/api/me'),
+  listConnections: () => request('/api/connections'),
+  createConnection: (data) => request('/api/connections', { method: 'POST', body: JSON.stringify(data) }),
+  updateConnection: (id, data) => request(`/api/connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteConnection: (id) => request(`/api/connections/${id}`, { method: 'DELETE' }),
 }

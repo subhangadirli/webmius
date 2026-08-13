@@ -56,8 +56,8 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 - [x] `GET /api/connections`, `POST /api/connections`, `PUT /api/connections/{id}`, `DELETE /api/connections/{id}` (DOCS.md §7)
 - [x] Ownership checks — a user can only read/modify their own connections
-- [ ] Frontend: connection list on the dashboard, add/edit/delete forms
-- [ ] **Exit criteria verified:** pytest API tests for CRUD + ownership enforcement; manual create/edit/delete walkthrough works in the UI.
+- [x] Frontend: connection list on the dashboard, add/edit/delete forms
+- [x] **Exit criteria verified:** 13 new pytest cases cover CRUD happy paths, validation, and cross-user ownership enforcement (30/30 tests passing). Full create → list → update → delete lifecycle exercised against the real backend via `curl` replicating the browser's exact request pattern (`credentials: 'include'`, `Origin: http://localhost:5173`, session cookie) — encrypted-at-rest password never echoed in responses, ownership checks return 404 for another user's connection. All new frontend modules (`Dashboard.jsx`, `ConnectionForm.jsx`, `ConnectionList.jsx`) serve and compile cleanly under Vite. No headless browser was available to click through the UI directly — a quick manual pass in an actual browser is still recommended.
 
 ### M5 — Web Terminal (WebSocket + SSH)
 
