@@ -14,4 +14,4 @@ services:
     volumes:
       - ./frontend:/app:z
       - /app/node_modules
-    command: npm run dev
+    command: pnpm run dev
