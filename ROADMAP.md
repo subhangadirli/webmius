@@ -42,7 +42,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] `POST /api/register`
 - [x] `POST /api/login`
 - [x] Session/JWT-based auth middleware for protected routes
-- [ ] **Exit criteria verified:** pytest coverage for register/login happy paths and failure cases (duplicate username/email, wrong password, missing fields).
+- [x] **Exit criteria verified:** pytest coverage for register/login happy paths and failure cases (duplicate username/email, wrong password, missing fields). 17/17 tests passing (10 new auth tests covering register, login, `/me`, `/logout`, plus 7 from M1).
 
 ### M3 — Frontend Foundation & Auth UI
 
