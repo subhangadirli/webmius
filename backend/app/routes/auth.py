@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, g, jsonify, request, session
 
 from ..extensions import db
 from ..models import User
+from ..security.auth import login_required
 from ..security.passwords import hash_password, verify_password
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
@@ -50,3 +51,15 @@ def login():
     session["user_id"] = user.id
 
     return jsonify(_user_to_dict(user)), 200
+
+
+@auth_bp.post("/logout")
+def logout():
+    session.pop("user_id", None)
+    return "", 204
+
+
+@auth_bp.get("/me")
+@login_required
+def me():
+    return jsonify(_user_to_dict(g.current_user)), 200

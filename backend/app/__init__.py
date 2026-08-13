@@ -9,7 +9,7 @@ from .extensions import db, migrate
 def create_app(config_object=None):
     app = Flask(__name__)
     app.config.from_object(config_object or get_config())
-    CORS(app)
+    CORS(app, supports_credentials=True, origins=app.config["CORS_ORIGINS"])
 
     db.init_app(app)
     migrate.init_app(app, db)
