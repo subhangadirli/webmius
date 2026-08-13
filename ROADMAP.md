@@ -54,8 +54,8 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M4 — SSH Connections CRUD
 
-- [ ] `GET /api/connections`, `POST /api/connections`, `PUT /api/connections/{id}`, `DELETE /api/connections/{id}` (DOCS.md §7)
-- [ ] Ownership checks — a user can only read/modify their own connections
+- [x] `GET /api/connections`, `POST /api/connections`, `PUT /api/connections/{id}`, `DELETE /api/connections/{id}` (DOCS.md §7)
+- [x] Ownership checks — a user can only read/modify their own connections
 - [ ] Frontend: connection list on the dashboard, add/edit/delete forms
 - [ ] **Exit criteria verified:** pytest API tests for CRUD + ownership enforcement; manual create/edit/delete walkthrough works in the UI.
 

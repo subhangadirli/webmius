@@ -5,13 +5,13 @@ services:
 
   backend:
     volumes:
-      - ./backend:/app:Z
+      - ./backend:/app:z
     environment:
       FLASK_ENV: development
     command: python wsgi.py
 
   frontend:
     volumes:
-      - ./frontend:/app:Z
+      - ./frontend:/app:z
       - /app/node_modules
     command: npm run dev

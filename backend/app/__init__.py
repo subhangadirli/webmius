@@ -22,4 +22,7 @@ def create_app(config_object=None):
     from .routes.auth import auth_bp
     app.register_blueprint(auth_bp)
 
+    from .routes.connections import connections_bp
+    app.register_blueprint(connections_bp)
+
     return app
