@@ -47,7 +47,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 ### M3 — Frontend Foundation & Auth UI
 
 - [x] React Router setup, API client wrapper
-- [ ] Login and Register pages
+- [x] Login and Register pages
 - [ ] Protected-route wrapper / auth context
 - [ ] Basic dashboard layout shell (empty state)
 - [ ] **Exit criteria verified:** manual login/register flow works end-to-end through Docker against the real backend (no mocks).
