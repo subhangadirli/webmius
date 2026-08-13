@@ -39,7 +39,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M2 — Auth API
 
-- [ ] `POST /api/register`
+- [x] `POST /api/register`
 - [ ] `POST /api/login`
 - [ ] Session/JWT-based auth middleware for protected routes
 - [ ] **Exit criteria verified:** pytest coverage for register/login happy paths and failure cases (duplicate username/email, wrong password, missing fields).
