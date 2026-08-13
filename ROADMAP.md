@@ -46,7 +46,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M3 — Frontend Foundation & Auth UI
 
-- [ ] React Router setup, API client wrapper
+- [x] React Router setup, API client wrapper
 - [ ] Login and Register pages
 - [ ] Protected-route wrapper / auth context
 - [ ] Basic dashboard layout shell (empty state)
