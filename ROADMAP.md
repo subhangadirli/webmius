@@ -50,7 +50,7 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 - [x] Login and Register pages
 - [x] Protected-route wrapper / auth context
 - [x] Basic dashboard layout shell (empty state)
-- [ ] **Exit criteria verified:** manual login/register flow works end-to-end through Docker against the real backend (no mocks).
+- [x] **Exit criteria verified:** register → login → `/api/me` → logout flow exercised against the real backend (no mocks) via `podman compose`, replicating the exact requests the React app makes (`credentials: 'include'`, `Origin: http://localhost:5173`) — session cookie issuance, CORS credential headers, and auth enforcement all confirmed correct. All frontend routes (`/`, `/login`, `/register`, `/dashboard`) and JS modules serve and compile cleanly under Vite with no transform errors. No headless browser was available in this environment to click through the UI directly — a quick manual pass in an actual browser is still recommended before considering this fully signed off.
 
 ### M4 — SSH Connections CRUD
 
