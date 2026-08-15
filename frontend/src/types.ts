@@ -35,3 +35,11 @@ export interface ConnectionPayload {
   password?: string
   auth_type?: AuthType
 }
+
+export interface SSHOutputEvent {
+  data: string
+}
+
+export interface SSHErrorEvent {
+  message: string
+}

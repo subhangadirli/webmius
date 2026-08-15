@@ -3,7 +3,7 @@ from flask_cors import CORS
 
 from config import get_config
 
-from .extensions import db, migrate
+from .extensions import db, migrate, socketio
 
 
 def create_app(config_object=None):
@@ -13,6 +13,7 @@ def create_app(config_object=None):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    socketio.init_app(app, cors_allowed_origins=app.config["CORS_ORIGINS"], async_mode="threading")
 
     from . import models  # noqa: F401  (registers models with SQLAlchemy metadata)
 
@@ -24,5 +25,8 @@ def create_app(config_object=None):
 
     from .routes.connections import connections_bp
     app.register_blueprint(connections_bp)
+
+    from .sockets.ssh_session import register_ssh_namespace
+    register_ssh_namespace()
 
     return app

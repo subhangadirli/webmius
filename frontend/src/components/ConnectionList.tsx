@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { SSHConnection } from '../types'
 
 interface ConnectionListProps {
@@ -20,6 +21,12 @@ function ConnectionList({ connections, onEdit, onDelete }: ConnectionListProps) 
             </div>
           </div>
           <div className="flex justify-end gap-2">
+            <Link
+              to={`/connections/${connection.id}/terminal`}
+              className="btn btn-sm preset-filled-primary-500"
+            >
+              Connect
+            </Link>
             <button
               type="button"
               className="btn btn-sm preset-tonal"

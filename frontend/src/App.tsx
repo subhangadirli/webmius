@@ -3,6 +3,7 @@ import Home from './pages/Home.tsx'
 import Login from './pages/Login.tsx'
 import Register from './pages/Register.tsx'
 import Dashboard from './pages/Dashboard.tsx'
+import TerminalPage from './pages/TerminalPage.tsx'
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
 
 function App() {
@@ -16,6 +17,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/connections/:id/terminal"
+        element={
+          <ProtectedRoute>
+            <TerminalPage />
           </ProtectedRoute>
         }
       />

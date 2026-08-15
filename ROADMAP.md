@@ -61,11 +61,11 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M5 — Web Terminal (WebSocket + SSH)
 
-- [ ] Flask-SocketIO `/ws/ssh-session` namespace
-- [ ] Paramiko-based SSH session bridging (connect, stream stdin/stdout, disconnect)
-- [ ] xterm.js terminal component on the frontend
-- [ ] Error surfacing for auth failure, unreachable host, dropped connection
-- [ ] **Exit criteria verified:** from the browser, open a real SSH session to a test container/VM and run commands interactively.
+- [x] Flask-SocketIO `/ws/ssh-session` namespace
+- [x] Paramiko-based SSH session bridging (connect, stream stdin/stdout, disconnect)
+- [x] xterm.js terminal component on the frontend
+- [x] Error surfacing for auth failure, unreachable host, dropped connection
+- [x] **Exit criteria verified:** backend adds `flask-socketio` + `paramiko`; the `/ws/ssh-session` Socket.IO namespace authenticates via the existing Flask session cookie (`on_connect` refuses unauthenticated sockets), then bridges an owned `SSHConnection` to a Paramiko `invoke_shell` PTY — `ssh_connect`/`ssh_input`/`ssh_resize` in, `ssh_connected`/`ssh_output`/`ssh_error`/`ssh_closed` out, with a background thread streaming channel output per-socket. Frontend adds `socket.io-client` + `@xterm/xterm` + `@xterm/addon-fit`; a new `Terminal` component wraps xterm with a `ResizeObserver`-driven `FitAddon`, and `TerminalPage` (route `/connections/:id/terminal`, reachable via a "Connect" button on each dashboard connection card) wires it to the socket. Verified against a real disposable OpenSSH container on the same Podman network (not mocked): a Python `socketio.Client()` script drove the full protocol end-to-end — real login banner + `echo` command executed and its output captured back over the stream; a wrong-password connection correctly emitted `ssh_error: "SSH authentication failed"`; an unreachable host (black-hole IP) correctly emitted `ssh_error: "unable to reach host: timed out"` after the 10s connect timeout. `tsc -b && vite build` and the full `pytest` suite (30/30) still pass. Known MVP limitation: host keys are accepted via `AutoAddPolicy` (no pinning/verification) and only password auth is supported end-to-end (`auth_type='key'` connections are rejected with a clear error) — key-based auth remains M9 stretch scope per DOCS.md §3.
 
 ### M6 — Security Hardening Pass
 

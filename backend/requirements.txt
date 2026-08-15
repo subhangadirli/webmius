@@ -6,4 +6,7 @@ Flask-Migrate==4.0.7
 psycopg2-binary==2.9.9
 bcrypt==4.2.0
 cryptography==43.0.1
+paramiko==3.5.0
+flask-socketio==5.3.7
+simple-websocket==1.0.0
 pytest==8.3.3
