@@ -1,6 +1,6 @@
 from flask import Blueprint, g, jsonify, request, session
 
-from ..extensions import db
+from ..extensions import db, limiter
 from ..models import User
 from ..security.auth import login_required
 from ..security.passwords import hash_password, verify_password
@@ -13,6 +13,7 @@ def _user_to_dict(user):
 
 
 @auth_bp.post("/register")
+@limiter.limit("10 per minute")
 def register():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()
@@ -36,6 +37,7 @@ def register():
 
 
 @auth_bp.post("/login")
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json(silent=True) or {}
     username = (data.get("username") or "").strip()

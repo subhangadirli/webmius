@@ -20,6 +20,11 @@ def client(app):
     return app.test_client()
 
 
+def csrf_headers(client):
+    cookie = client.get_cookie("csrf_token")
+    return {"X-CSRF-Token": cookie.value} if cookie else {}
+
+
 def register_and_login(client, username="alice", email="alice@example.com", password="correcthorse"):
     client.post("/api/register", json={"username": username, "email": email, "password": password})
     return client.post("/api/login", json={"username": username, "password": password})
@@ -34,7 +39,7 @@ def create_connection(client, **overrides):
         "password": "hunter2",
     }
     payload.update(overrides)
-    return client.post("/api/connections", json=payload)
+    return client.post("/api/connections", json=payload, headers=csrf_headers(client))
 
 
 def test_list_connections_requires_auth(client):
@@ -63,7 +68,7 @@ def test_create_connection_success(client):
 
 def test_create_connection_missing_fields(client):
     register_and_login(client)
-    response = client.post("/api/connections", json={"name": "prod-box"})
+    response = client.post("/api/connections", json={"name": "prod-box"}, headers=csrf_headers(client))
     assert response.status_code == 400
 
 
@@ -88,7 +93,7 @@ def test_create_connection_invalid_port(client):
 def test_list_connections_returns_only_own(client):
     register_and_login(client)
     create_connection(client, name="alice-box")
-    client.post("/api/logout")
+    client.post("/api/logout", headers=csrf_headers(client))
 
     register_and_login(client, username="bob", email="bob@example.com", password="correcthorse")
     create_connection(client, name="bob-box")
@@ -103,13 +108,15 @@ def test_get_own_connection_via_update_ownership(client):
     register_and_login(client, username="alice", email="alice@example.com")
     created = create_connection(client).get_json()
     connection_id = created["id"]
-    client.post("/api/logout")
+    client.post("/api/logout", headers=csrf_headers(client))
 
     register_and_login(client, username="bob", email="bob@example.com")
-    response = client.put(f"/api/connections/{connection_id}", json={"name": "hijacked"})
+    response = client.put(
+        f"/api/connections/{connection_id}", json={"name": "hijacked"}, headers=csrf_headers(client)
+    )
     assert response.status_code == 404
 
-    delete_response = client.delete(f"/api/connections/{connection_id}")
+    delete_response = client.delete(f"/api/connections/{connection_id}", headers=csrf_headers(client))
     assert delete_response.status_code == 404
 
 
@@ -120,6 +127,7 @@ def test_update_connection_success(client):
     response = client.put(
         f"/api/connections/{created['id']}",
         json={"name": "renamed-box", "port": 2222},
+        headers=csrf_headers(client),
     )
     assert response.status_code == 200
     body = response.get_json()
@@ -130,7 +138,7 @@ def test_update_connection_success(client):
 
 def test_update_nonexistent_connection(client):
     register_and_login(client)
-    response = client.put("/api/connections/9999", json={"name": "nope"})
+    response = client.put("/api/connections/9999", json={"name": "nope"}, headers=csrf_headers(client))
     assert response.status_code == 404
 
 
@@ -138,7 +146,7 @@ def test_delete_connection_success(client):
     register_and_login(client)
     created = create_connection(client).get_json()
 
-    response = client.delete(f"/api/connections/{created['id']}")
+    response = client.delete(f"/api/connections/{created['id']}", headers=csrf_headers(client))
     assert response.status_code == 204
 
     list_response = client.get("/api/connections")
@@ -147,5 +155,24 @@ def test_delete_connection_success(client):
 
 def test_delete_nonexistent_connection(client):
     register_and_login(client)
-    response = client.delete("/api/connections/9999")
+    response = client.delete("/api/connections/9999", headers=csrf_headers(client))
     assert response.status_code == 404
+
+
+def test_mutating_request_without_csrf_header_is_rejected(client):
+    register_and_login(client)
+    response = client.post("/api/connections", json={
+        "name": "prod-box", "host": "10.0.0.5", "port": 22,
+        "username": "deploy", "password": "hunter2",
+    })
+    assert response.status_code == 403
+
+
+def test_mutating_request_with_wrong_csrf_token_is_rejected(client):
+    register_and_login(client)
+    response = client.post(
+        "/api/connections",
+        json={"name": "prod-box", "host": "10.0.0.5", "port": 22, "username": "deploy", "password": "hunter2"},
+        headers={"X-CSRF-Token": "not-the-real-token"},
+    )
+    assert response.status_code == 403

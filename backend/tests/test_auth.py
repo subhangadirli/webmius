@@ -96,7 +96,8 @@ def test_logout_clears_session(client):
     login(client)
     assert client.get("/api/me").status_code == 200
 
-    logout_response = client.post("/api/logout")
+    csrf_token = client.get_cookie("csrf_token").value
+    logout_response = client.post("/api/logout", headers={"X-CSRF-Token": csrf_token})
     assert logout_response.status_code == 204
 
     assert client.get("/api/me").status_code == 401

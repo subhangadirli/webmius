@@ -69,11 +69,11 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M6 — Security Hardening Pass
 
-- [ ] Reverse proxy (Caddy or nginx) added to compose as a "prod-like" profile for TLS termination
-- [ ] CSRF protection on state-changing endpoints
-- [ ] Rate limiting on auth endpoints
-- [ ] Audit: confirm SSH credentials are encrypted at rest end-to-end, cookies are `HttpOnly`/`Secure`/`SameSite`
-- [ ] **Exit criteria verified:** every item in DOCS.md §8 (Security Considerations) is verifiably satisfied.
+- [x] Reverse proxy (Caddy or nginx) added to compose as a "prod-like" profile for TLS termination
+- [x] CSRF protection on state-changing endpoints
+- [x] Rate limiting on auth endpoints
+- [x] Audit: confirm SSH credentials are encrypted at rest end-to-end, cookies are `HttpOnly`/`Secure`/`SameSite`
+- [x] **Exit criteria verified:** `deploy/Caddyfile` + a `proxy` service (`docker-compose.yml`, gated behind `--profile prod`, excluded from the default dev `up`) terminates real TLS via Caddy's internal CA and reverse-proxies `/api/*` + `/socket.io/*` to the backend and everything else to the frontend. CSRF uses the double-submit-cookie pattern (`backend/app/security/csrf.py`): a non-`HttpOnly` `csrf_token` cookie/session pair is issued for every visitor, and any mutating `/api/*` request from an authenticated session must echo it back via `X-CSRF-Token` or gets a 403 — verified directly with `curl` (missing header → 403, correct header → 201) both in plain dev HTTP and through the HTTPS proxy. `Flask-Limiter` caps `/api/register` and `/api/login` at 10/minute per IP (`memory://` storage — a documented single-instance limitation); verified with `curl` (11 rapid logins → 401×9 then 429). Cookies are `HttpOnly` + `SameSite=Lax` always, and `Secure` whenever `SESSION_COOKIE_SECURE` is true (the default; the dev compose override explicitly disables it since dev runs over plain HTTP) — verified `Secure` appears on both `session` and `csrf_token` `Set-Cookie` headers when hit through the HTTPS proxy with `FLASK_ENV=production`, and is absent over the plain-HTTP dev server. SSH credentials audited end-to-end: `encrypted_password` in Postgres is genuine Fernet ciphertext (checked via `psql` directly), plaintext is never returned in any API response (from M4) or logged (grepped `backend/app` for password handling). Full `pytest` suite (33/33, incl. two new CSRF-rejection cases and a dedicated rate-limit test) and the M5 real-SSH-container walkthrough both re-verified with all of the above layered in — no regressions. `CORS_ORIGINS` is now parsed as a comma-separated list so dev and prod origins can coexist. Passwords-hashed-with-bcrypt and session-based-auth (DOCS.md §8) were already satisfied as of M2; JWT remains explicitly optional per spec.
 
 ### M7 — CI & Test Scaffolding
 

@@ -12,13 +12,27 @@ interface ApiErrorBody {
   error?: string
 }
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', undefined])
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> | undefined),
+  }
+
+  if (!SAFE_METHODS.has(options.method?.toUpperCase())) {
+    const csrfToken = readCookie('csrf_token')
+    if (csrfToken) headers['X-CSRF-Token'] = csrfToken
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     ...options,
   })
 
