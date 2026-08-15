@@ -18,6 +18,7 @@ node_modules/
 frontend/dist/
 frontend/build/
 .vite/
+*.tsbuildinfo
 
 # Editors / OS
 .vscode/
