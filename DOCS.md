@@ -51,22 +51,23 @@ The application enables users to:
 
 The system follows a client-server architecture:
 
-* **Frontend:** React (or Next.js if SSR needed)
-* **Backend:** Python Flask (preferred for simplicity)
+* **Frontend:** React (TypeScript, built with Vite)
+* **Backend:** Python Flask
 * **Database:** PostgreSQL
 * **Communication:** REST API + WebSocket (for terminal)
+* **Deployment unit:** Docker/Podman Compose (`db` + `backend` + `frontend`, plus an opt-in `proxy` service for TLS — see §10)
 
 * * *
 
 ### 5\. Technology Stack
 
-| Layer        | Technology                  |
-| ------------ | --------------------------- |
-| Frontend     | React / Next.js             |
-| Backend      | Flask (Python)              |
-| Database     | PostgreSQL                  |
-| SSH Handling | Paramiko (Python)           |
-| Real-time    | WebSockets (Flask-SocketIO) |
+| Layer        | Technology                                     |
+| ------------ | ----------------------------------------------- |
+| Frontend     | React + TypeScript (Vite, Tailwind, Skeleton)  |
+| Backend      | Flask (Python)                                 |
+| Database     | PostgreSQL                                     |
+| SSH Handling | Paramiko (Python)                              |
+| Real-time    | WebSockets (Flask-SocketIO + Socket.IO client) |
 
 * * *
 
@@ -98,6 +99,8 @@ The system follows a client-server architecture:
 
 * POST /api/register
 * POST /api/login
+* POST /api/logout
+* GET /api/me — current session's user, used by the frontend to restore auth state on load
 
 #### SSH Connections
 
@@ -106,21 +109,26 @@ The system follows a client-server architecture:
 * PUT /api/connections/{id}
 * DELETE /api/connections/{id}
 
+All `/api/*` mutating requests (state-changing methods) additionally require an `X-CSRF-Token` header echoing the `csrf_token` cookie (double-submit pattern) — see §8.
+
 #### SSH Session
 
-* WS /ws/ssh-session
+* WS /ws/ssh-session (Flask-SocketIO namespace, authenticated via the existing session cookie)
     
-    * Establish SSH connection
-    * Send/receive terminal commands
+    * `ssh_connect` / `ssh_input` / `ssh_resize` — client → server
+    * `ssh_connected` / `ssh_output` / `ssh_error` / `ssh_closed` — server → client
 
 * * *
 
 ### 8\. Security Considerations
 
 * Passwords hashed using bcrypt
-* SSH credentials encrypted before storing
-* Use HTTPS in production
-* Session-based authentication (JWT optional)
+* SSH credentials encrypted at rest (Fernet, key sourced from env) and never echoed back in API responses
+* Session cookies are `HttpOnly` + `SameSite=Lax`, and `Secure` whenever served over HTTPS
+* CSRF protection on all state-changing `/api/*` requests via a double-submit cookie/header pair
+* Rate limiting on `/api/register` and `/api/login` (10/min per IP)
+* HTTPS available via an opt-in reverse-proxy ("prod" Compose profile, Caddy) that terminates TLS in front of the dev services — see §10
+* Session-based authentication (JWT optional, not implemented in the MVP)
 
 * * *
 
@@ -136,27 +144,30 @@ The system follows a client-server architecture:
 
 ### 10\. Deployment
 
-* Self-hosted on VPS or local server
-* Backend runs via Flask
-* Frontend served via Node or static build
-* PostgreSQL hosted locally or remotely
+* Self-hosted on VPS or local server, container-first: `docker compose up` / `podman compose up` brings up `db` (PostgreSQL), `backend` (Flask), and `frontend` (Vite dev server) with no local Python/Node install required
+* An opt-in `proxy` service (Caddy, `--profile prod`) terminates real TLS in front of the dev services, for exercising the `Secure`-cookie / HTTPS path locally or on a real host
+* See `README.md` for the exact commands
 
 * * *
 
 ### 11. Limitations (MVP)
 
-* No advanced terminal features
-* Limited security compared to enterprise tools
+* No advanced terminal features (multiplexing, session recording)
+* SSH key-based authentication is modeled in the schema (`auth_type`) but not implemented end-to-end yet — only password auth works; `auth_type: "key"` connections are rejected with a clear error (tracked as future work, §12)
+* Limited security compared to enterprise tools (no secrets vaulting, no SSO)
 * No multi-user collaboration
 
 * * *
 
 ### 12\. Future Improvements
 
-* Full terminal emulation (xterm.js)
+* SSH key-based authentication (end-to-end)
+* Tagging / grouping servers
+* Connection history (logs)
 * Role-based access control
-* SSH key management UI
-* Mobile-friendly interface
+* Further terminal emulation improvements (multiplexing, session recording), mobile-friendly UI
+
+Terminal emulation via xterm.js shipped as part of the MVP (§5) rather than remaining a stretch goal.
 
 * * *
 

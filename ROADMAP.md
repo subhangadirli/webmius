@@ -82,10 +82,18 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M8 — MVP Polish & Docs
 
-- [ ] UX polish on the connection list and forms; empty/error/loading states
-- [ ] `README.md` with a docker-first quickstart (`git clone` → `docker compose up` → login)
-- [ ] Reconcile `DOCS.md` with any scope drift that happened during the build
-- [ ] **Exit criteria verified:** a new user can clone the repo, run one command, and complete the full MVP user flow from DOCS.md §9.
+- [x] UX polish on the connection list and forms; empty/error/loading states
+- [x] `README.md` with a docker-first quickstart (`git clone` → `docker compose up` → login)
+- [x] Reconcile `DOCS.md` with any scope drift that happened during the build
+- [x] **Exit criteria verified:** a new user can clone the repo, run one command, and complete the full MVP user flow from DOCS.md §9.
+
+  UX polish: the dashboard's delete action previously had no error handling at all (a failed `DELETE` was an unhandled promise rejection with no user feedback) — it now surfaces the error inline and shows a per-row "Deleting…" disabled state. A failed connection *list* load now offers a "Retry" button instead of being a dead end. The terminal page now offers a "Reconnect" button once a session closes or errors, instead of forcing a trip back to the dashboard.
+
+  `DOCS.md` reconciled against actual scope drift: §4/§5 now say React + TypeScript/Vite (not "React/Next.js"), list the container-first deployment unit, and name Flask-SocketIO + the Socket.IO client explicitly; §7 documents `/api/logout` and `/api/me` (added in M2/M3 but never listed) and the CSRF header requirement (M6); §8 documents CSRF, rate limiting, cookie flags, and the TLS reverse-proxy profile (all M6); §10 describes the actual `docker compose up` deployment path instead of a generic "runs via Flask" description; §11 now notes that `auth_type: "key"` connections exist in the schema but are rejected end-to-end (an M5 MVP limitation that was previously undocumented); §12 moves xterm.js out of "Future Improvements" since it shipped in M5.
+
+  `README.md` gained a "Using Webmius" walkthrough (register → add connection → connect → run commands) mirroring DOCS.md §9, and a "Running tests" section pointing at the same `docker compose run` commands CI uses.
+
+  **A real bug was caught and fixed during this milestone's exit-criteria verification, not just asserted:** a `docker compose down -v && docker compose up --build` from a genuinely empty Postgres volume failed register/login with a 500 (`relation "users" does not exist`) — Alembic migrations were never run automatically, only ever by hand during earlier milestones' verification. Fixed with `backend/entrypoint.sh` (`flask db upgrade` then `exec "$@"`) wired in via `ENTRYPOINT ["sh", "entrypoint.sh"]` in `backend/Dockerfile` (invoked through `sh` rather than relying on the executable bit, since the dev compose override bind-mounts the host `./backend` directory over `/app` and a checked-out file's mode — not the image's `RUN chmod +x` — wins once that happens; this was hit and fixed live, `podman compose start` failed with `OCI permission denied` on the first attempt). Re-verified from a fully fresh volume: `podman compose up -d` now runs migrations automatically before serving, and the entire DOCS.md §9 flow was driven end-to-end for real — `POST /api/register` → `/api/login` → `POST /api/connections` → dashboard list → a Socket.IO client authenticated with the real session cookie drove `ssh_connect`/`ssh_input` against a disposable `linuxserver/openssh-server` container on the same Compose network and got the `echo` output back over `ssh_output`, then `DELETE /api/connections/{id}` (204). Backend `pytest` (33/33) re-verified via `podman compose run --rm backend pytest -q`; frontend `pnpm run typecheck` / `pnpm run test` / `pnpm run build` re-verified via `podman compose run --rm frontend ...` against a freshly built image (a stale anonymous `node_modules` volume from an earlier session had to be removed first — noted here in case it bites a future contributor: `podman compose down -v` clears it). No headless browser was available to click through the polished UI states directly — the underlying state transitions were verified via the real API/WS calls above, but a manual pass in an actual browser is still recommended before calling the UI polish fully signed off.
 
 ### M9 — Optional / Stretch (Post-MVP)
 

@@ -17,6 +17,8 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formMode, setFormMode] = useState<FormMode>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const loadConnections = async () => {
     setLoading(true)
@@ -54,8 +56,16 @@ function Dashboard() {
 
   const handleDelete = async (connection: SSHConnection) => {
     if (!window.confirm(`Delete connection "${connection.name}"?`)) return
-    await api.deleteConnection(connection.id)
-    await loadConnections()
+    setDeleteError(null)
+    setDeletingId(connection.id)
+    try {
+      await api.deleteConnection(connection.id)
+      await loadConnections()
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const isEditing = formMode !== null && formMode !== 'create'
@@ -100,8 +110,23 @@ function Dashboard() {
           </div>
         )}
 
-        {loading && <p className="opacity-60">Loading connections…</p>}
-        {loadError && <p className="text-error-500 text-sm">{loadError}</p>}
+        {deleteError && <p className="text-error-500 text-sm">{deleteError}</p>}
+
+        {loading && (
+          <div className="flex flex-col items-center gap-3 p-12 text-center">
+            <p className="opacity-60">Loading connections…</p>
+          </div>
+        )}
+
+        {!loading && loadError && (
+          <div className="card preset-filled-surface-100-900 flex flex-col items-center gap-3 p-12 text-center">
+            <h2 className="h3">Couldn&rsquo;t load your connections</h2>
+            <p className="text-error-500 text-sm">{loadError}</p>
+            <button type="button" className="btn preset-tonal" onClick={loadConnections}>
+              Retry
+            </button>
+          </div>
+        )}
 
         {!loading && !loadError && connections.length === 0 && (
           <div className="card preset-filled-surface-100-900 flex flex-col items-center gap-3 p-12 text-center">
@@ -113,6 +138,7 @@ function Dashboard() {
         {!loading && !loadError && connections.length > 0 && (
           <ConnectionList
             connections={connections}
+            deletingId={deletingId}
             onEdit={(connection) => setFormMode(connection)}
             onDelete={handleDelete}
           />

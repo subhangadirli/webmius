@@ -14,8 +14,13 @@ function TerminalPage() {
 
   const [status, setStatus] = useState<SessionStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    setStatus('connecting')
+    setError(null)
+    terminalRef.current?.reset()
+
     const socket = createSshSocket()
     socketRef.current = socket
 
@@ -51,7 +56,7 @@ function TerminalPage() {
       socket.disconnect()
       socketRef.current = null
     }
-  }, [id])
+  }, [id, attempt])
 
   const handleData = (data: string) => {
     socketRef.current?.emit('ssh_input', { data })
@@ -73,6 +78,15 @@ function TerminalPage() {
           {status === 'closed' && 'Session closed'}
           {status === 'error' && `Error: ${error}`}
         </span>
+        {(status === 'closed' || status === 'error') && (
+          <button
+            type="button"
+            className="btn btn-sm preset-filled-primary-500"
+            onClick={() => setAttempt((n) => n + 1)}
+          >
+            Reconnect
+          </button>
+        )}
       </div>
       <div className="min-h-0 flex-1 p-2">
         <Terminal ref={terminalRef} onData={handleData} onResize={handleResize} />
