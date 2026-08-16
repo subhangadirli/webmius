@@ -1,3 +1,5 @@
+import codecs
+import socket
 import threading
 from datetime import datetime, timezone
 
@@ -89,6 +91,11 @@ def _stream_output(sid, channel, app, log_id):
     recording_chunks = []
     recording_len = 0
     truncated = False
+    # A multi-byte UTF-8 character (eg. powerline glyphs/box-drawing chars used
+    # in many shell prompts) can straddle a 4096-byte recv() boundary. Decoding
+    # each chunk independently would mangle it into replacement characters, so
+    # an incremental decoder carries partial sequences over to the next chunk.
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
 
     while True:
         try:
@@ -97,7 +104,9 @@ def _stream_output(sid, channel, app, log_id):
             break
         if not data:
             break
-        text = data.decode("utf-8", errors="replace")
+        text = decoder.decode(data)
+        if not text:
+            continue
 
         if not truncated:
             if recording_len + len(text) > MAX_RECORDING_CHARS:
@@ -200,8 +209,28 @@ class SSHSessionNamespace(Namespace):
             emit("ssh_error", {"message": message})
             return
 
+        # Paramiko doesn't disable Nagle's algorithm on the underlying socket.
+        # For an interactive shell that means every small packet (eg. a
+        # single keystroke's echo) can sit buffered for up to ~40ms waiting
+        # to coalesce with more data before it's sent, which reads as the
+        # whole session being laggy. Disabling it trades a little bandwidth
+        # efficiency (irrelevant here) for correct interactive latency.
+        sock = client.get_transport().sock
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        try:
+            cols = int(payload.get("cols", 80))
+            rows = int(payload.get("rows", 24))
+        except (TypeError, ValueError):
+            cols, rows = 80, 24
+
         log_id = _record_attempt(user, connection, "success")
-        channel = client.invoke_shell(term="xterm-256color")
+        # Allocate the pty at the frontend's real size up front. If the shell
+        # instead starts at the 80x24 default and gets resized a moment later,
+        # the remote line editor's cursor math for the prompt it already drew
+        # (at the wrong width) goes stale — its next redraw (eg. on backspace)
+        # can land on and overwrite characters of the prompt itself.
+        channel = client.invoke_shell(term="xterm-256color", width=cols, height=rows)
         _set_session(sid, _SSHSession(client, channel, log_id))
         app = current_app._get_current_object()
         socketio.start_background_task(_stream_output, sid, channel, app, log_id)

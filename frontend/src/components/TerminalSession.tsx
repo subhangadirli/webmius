@@ -1,3 +1,5 @@
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Refresh01Icon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import type { Socket } from 'socket.io-client'
 import Terminal, { type TerminalHandle } from './Terminal.tsx'
@@ -34,7 +36,12 @@ function TerminalSession({ connectionId, active, onStatusChange }: TerminalSessi
     socketRef.current = socket
 
     socket.on('connect', () => {
-      socket.emit('ssh_connect', { connection_id: connectionId })
+      const size = terminalRef.current?.getSize()
+      socket.emit('ssh_connect', {
+        connection_id: connectionId,
+        cols: size?.cols ?? 80,
+        rows: size?.rows ?? 24,
+      })
     })
     socket.on('ssh_connected', () => updateStatus('connected', null))
     socket.on('ssh_output', (payload: SSHOutputEvent) => {
@@ -77,6 +84,7 @@ function TerminalSession({ connectionId, active, onStatusChange }: TerminalSessi
             className="btn btn-sm preset-filled-primary-500"
             onClick={() => setAttempt((n) => n + 1)}
           >
+            <HugeiconsIcon icon={Refresh01Icon} size={16} strokeWidth={1.5} />
             Reconnect
           </button>
         </div>
