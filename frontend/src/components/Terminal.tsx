@@ -6,6 +6,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 export interface TerminalHandle {
   write: (data: string) => void
   reset: () => void
+  focus: () => void
 }
 
 interface TerminalProps {
@@ -20,6 +21,7 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize }
   useImperativeHandle(ref, () => ({
     write: (data: string) => xtermRef.current?.write(data),
     reset: () => xtermRef.current?.reset(),
+    focus: () => xtermRef.current?.focus(),
   }))
 
   useEffect(() => {

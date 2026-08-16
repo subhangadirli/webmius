@@ -103,6 +103,7 @@ The system follows a client-server architecture:
 * connection\_name, host, port, username — a snapshot of the connection's identity at the time of the attempt, so history stays meaningful even after the connection is edited or deleted
 * status ("success" or "failed")
 * error\_message (nullable, populated on failure)
+* recording (nullable; the session's raw terminal output, bounded to 500,000 characters — see §7)
 * started\_at, ended\_at (ended\_at is null while a session is still open)
 
 * * *
@@ -132,6 +133,7 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 #### Connection History
 
 * GET /api/connection-logs — the current user's own connection attempts (most recent 100), each SSH session start/end and any password/key connections is logged automatically, not user-initiated
+* GET /api/connection-logs/{id}/recording — the session's captured terminal transcript (`{"recording": string | null}`), fetched on demand rather than embedded in the list response
 
 #### Admin (role: "admin" only)
 
@@ -144,6 +146,8 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
     
     * `ssh_connect` / `ssh_input` / `ssh_resize` — client → server
     * `ssh_connected` / `ssh_output` / `ssh_error` / `ssh_closed` — server → client
+
+The namespace supports multiple concurrent sessions per user: each is an independent Socket.IO connection (its own `sid`), keyed independently server-side, so the frontend can open several tabs/panes at once without any per-connection protocol changes — see §9. Every session's raw output is captured server-side into `connection_logs.recording` (bounded to 500,000 characters, then truncated with a notice) as it streams, and persisted when the session ends.
 
 * * *
 
@@ -164,8 +168,9 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 1. User registers/logs in
 2. User adds SSH server details
 3. User selects a server from dashboard
-4. Web terminal opens
+4. Web terminal opens in a new tab within the terminal workspace (`/terminal`); a "+ New" picker lets the user open additional servers as further tabs without leaving the workspace, each an independent concurrent session
 5. Commands are executed remotely via backend
+6. The user can review past sessions (including a captured terminal transcript for successful ones) from the connection history page
 
 * * *
 
@@ -179,7 +184,7 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 
 ### 11. Limitations (MVP)
 
-* No advanced terminal features (multiplexing, session recording)
+* Session recordings are plain terminal transcripts (ANSI control codes stripped for display), not timed asciinema-style playback — there's no "watch it happen in real time" replay, just the captured text
 * Limited security compared to enterprise tools (no secrets vaulting, no SSO)
 * No multi-user collaboration: role-based access control is minimal (a global "user"/"admin" distinction — admins can list and remove accounts) rather than shared connections, teams, or per-resource permissions
 
@@ -188,8 +193,9 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 ### 12\. Future Improvements
 
 * Per-resource / team-based access control (shared connections, not just a global admin/user split)
+* Timed, replayable session recordings (asciinema-style), rather than a plain transcript
 
-Terminal emulation via xterm.js, SSH key-based authentication, tagging/grouping of servers, connection history, basic role-based access control, and a verified mobile-responsive UI all shipped as part of the MVP (§5, §7) rather than remaining stretch goals. Multiplexing and session recording remain explicitly out of scope for the MVP — see `ROADMAP.md`'s "Out of Scope for MVP" section.
+Terminal emulation via xterm.js, SSH key-based authentication, tagging/grouping of servers, connection history, basic role-based access control, a verified mobile-responsive UI, terminal multiplexing (multiple concurrent tabbed sessions), and session recording (transcript capture) all shipped as part of the MVP (§5, §7) rather than remaining stretch goals. Multiplexing and session recording were explicitly called out of scope earlier in this project's life (see `ROADMAP.md`'s "Out of Scope for MVP" section) — that boundary was deliberately lifted by request partway through the build, not silently ignored; `ROADMAP.md` records when and why.
 
 * * *
 

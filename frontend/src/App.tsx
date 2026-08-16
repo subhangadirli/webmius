@@ -3,7 +3,7 @@ import Home from './pages/Home.tsx'
 import Login from './pages/Login.tsx'
 import Register from './pages/Register.tsx'
 import Dashboard from './pages/Dashboard.tsx'
-import TerminalPage from './pages/TerminalPage.tsx'
+import TerminalWorkspace from './pages/TerminalWorkspace.tsx'
 import ConnectionHistory from './pages/ConnectionHistory.tsx'
 import AdminUsers from './pages/AdminUsers.tsx'
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
@@ -23,10 +23,10 @@ function App() {
         }
       />
       <Route
-        path="/connections/:id/terminal"
+        path="/terminal"
         element={
           <ProtectedRoute>
-            <TerminalPage />
+            <TerminalWorkspace />
           </ProtectedRoute>
         }
       />

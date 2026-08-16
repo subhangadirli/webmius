@@ -16,6 +16,7 @@ def _log_to_dict(log):
         "username": log.username,
         "status": log.status,
         "error_message": log.error_message,
+        "has_recording": bool(log.recording),
         "started_at": log.started_at.isoformat() if log.started_at else None,
         "ended_at": log.ended_at.isoformat() if log.ended_at else None,
     }
@@ -31,3 +32,13 @@ def list_connection_logs():
         .all()
     )
     return jsonify([_log_to_dict(l) for l in logs]), 200
+
+
+@history_bp.get("/connection-logs/<int:log_id>/recording")
+@login_required
+def get_connection_log_recording(log_id):
+    log = ConnectionLog.query.filter_by(id=log_id, user_id=g.current_user.id).first()
+    if log is None:
+        return jsonify(error="connection log not found"), 404
+
+    return jsonify(recording=log.recording), 200

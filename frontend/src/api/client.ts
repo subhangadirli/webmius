@@ -63,6 +63,8 @@ export const api = {
     request<SSHConnection>(`/api/connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteConnection: (id: number) => request<null>(`/api/connections/${id}`, { method: 'DELETE' }),
   listConnectionLogs: () => request<ConnectionLogEntry[]>('/api/connection-logs'),
+  getConnectionLogRecording: (id: number) =>
+    request<{ recording: string | null }>(`/api/connection-logs/${id}/recording`),
   listAdminUsers: () => request<AdminUser[]>('/api/admin/users'),
   deleteAdminUser: (id: number) => request<null>(`/api/admin/users/${id}`, { method: 'DELETE' }),
 }

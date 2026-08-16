@@ -13,6 +13,11 @@ from ..security.ssh_keys import parse_private_key
 
 NAMESPACE = "/ws/ssh-session"
 
+# Bounds how much of a session's output we keep as a recording, so a
+# long-running (or noisy) session can't grow a log row without limit.
+MAX_RECORDING_CHARS = 500_000
+_TRUNCATION_NOTICE = "\n[recording truncated — session continued]\n"
+
 _sessions = {}
 _sessions_lock = threading.Lock()
 
@@ -43,13 +48,14 @@ def _record_attempt(user, connection, status, error_message=None):
     return log.id
 
 
-def _mark_attempt_ended(app, log_id):
+def _finish_attempt(app, log_id, recording):
     if log_id is None:
         return
     with app.app_context():
         log = db.session.get(ConnectionLog, log_id)
         if log is not None and log.ended_at is None:
             log.ended_at = datetime.now(timezone.utc)
+            log.recording = recording or None
             db.session.commit()
 
 
@@ -80,6 +86,10 @@ def _close_session(session):
 
 
 def _stream_output(sid, channel, app, log_id):
+    recording_chunks = []
+    recording_len = 0
+    truncated = False
+
     while True:
         try:
             data = channel.recv(4096)
@@ -87,17 +97,26 @@ def _stream_output(sid, channel, app, log_id):
             break
         if not data:
             break
-        socketio.emit(
-            "ssh_output",
-            {"data": data.decode("utf-8", errors="replace")},
-            to=sid,
-            namespace=NAMESPACE,
-        )
+        text = data.decode("utf-8", errors="replace")
+
+        if not truncated:
+            if recording_len + len(text) > MAX_RECORDING_CHARS:
+                remaining = MAX_RECORDING_CHARS - recording_len
+                if remaining > 0:
+                    recording_chunks.append(text[:remaining])
+                recording_chunks.append(_TRUNCATION_NOTICE)
+                truncated = True
+            else:
+                recording_chunks.append(text)
+                recording_len += len(text)
+
+        socketio.emit("ssh_output", {"data": text}, to=sid, namespace=NAMESPACE)
+
     socketio.emit("ssh_closed", {}, to=sid, namespace=NAMESPACE)
     session = _pop_session(sid)
     if session is not None:
         _close_session(session)
-    _mark_attempt_ended(app, log_id)
+    _finish_attempt(app, log_id, "".join(recording_chunks))
 
 
 class SSHSessionNamespace(Namespace):

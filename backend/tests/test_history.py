@@ -81,3 +81,46 @@ def test_connection_log_survives_connection_deletion(client, app):
 
     response = client.get("/api/connection-logs")
     assert len(response.get_json()) == 1
+
+
+def test_has_recording_flag(client, app):
+    alice = register_and_login(client).get_json()
+    _add_log(app, alice["id"], recording="Welcome to OpenSSH\n$ echo hi\nhi\n")
+    _add_log(app, alice["id"], recording=None)
+
+    entries = client.get("/api/connection-logs").get_json()
+    flags = sorted(e["has_recording"] for e in entries)
+    assert flags == [False, True]
+
+
+def test_get_recording_returns_transcript(client, app):
+    alice = register_and_login(client).get_json()
+    log_id = _add_log(app, alice["id"], recording="Welcome to OpenSSH\n$ echo hi\nhi\n")
+
+    response = client.get(f"/api/connection-logs/{log_id}/recording")
+    assert response.status_code == 200
+    assert response.get_json()["recording"] == "Welcome to OpenSSH\n$ echo hi\nhi\n"
+
+
+def test_get_recording_requires_auth(client, app):
+    alice = register_and_login(client).get_json()
+    log_id = _add_log(app, alice["id"], recording="some output")
+    client.post("/api/logout", headers={"X-CSRF-Token": client.get_cookie("csrf_token").value})
+
+    response = client.get(f"/api/connection-logs/{log_id}/recording")
+    assert response.status_code == 401
+
+
+def test_get_recording_not_found_for_other_users_log(client, app):
+    alice = register_and_login(client, username="alice", email="alice@example.com").get_json()
+    log_id = _add_log(app, alice["id"], recording="alice's secret session")
+
+    register_and_login(client, username="bob", email="bob@example.com")
+    response = client.get(f"/api/connection-logs/{log_id}/recording")
+    assert response.status_code == 404
+
+
+def test_get_recording_not_found_for_missing_id(client, app):
+    register_and_login(client)
+    response = client.get("/api/connection-logs/9999/recording")
+    assert response.status_code == 404

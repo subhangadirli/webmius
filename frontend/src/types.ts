@@ -62,6 +62,7 @@ export interface ConnectionLogEntry {
   username: string
   status: ConnectionLogStatus
   error_message: string | null
+  has_recording: boolean
   started_at: string | null
   ended_at: string | null
 }

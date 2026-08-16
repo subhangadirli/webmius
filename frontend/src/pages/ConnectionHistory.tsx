@@ -12,6 +12,97 @@ function formatDuration(startedAt: string | null, endedAt: string | null): strin
   return `${minutes}m ${seconds % 60}s`
 }
 
+// The recording is the raw terminal byte stream (as stored server-side), so
+// it still carries ANSI control sequences (cursor moves, color codes,
+// bracketed-paste toggles). Strip them for a readable plain-text transcript.
+function stripAnsi(text: string): string {
+  return text
+    .replace(/\x1b\[[0-9;?]*[a-zA-Z]/g, '')
+    .replace(/\x1b\][^\x07]*(\x07|\x1b\\)/g, '')
+    .replace(/\x1b[()][0-9A-Za-z]/g, '')
+    .replace(/\x1b[=>]/g, '')
+}
+
+function LogEntry({ log }: { log: ConnectionLogEntry }) {
+  const [expanded, setExpanded] = useState(false)
+  const [recording, setRecording] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const toggleRecording = async () => {
+    if (expanded) {
+      setExpanded(false)
+      return
+    }
+    setExpanded(true)
+    if (recording !== null || loading) return
+    setLoading(true)
+    setError(null)
+    try {
+      const result = await api.getConnectionLogRecording(log.id)
+      setRecording(result.recording ?? '')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <li className="card preset-filled-surface-100-900 space-y-2 p-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-semibold break-words">{log.connection_name}</p>
+          <p className="text-sm opacity-60 break-words">
+            {log.username}@{log.host}:{log.port}
+          </p>
+          {log.status === 'failed' && log.error_message && (
+            <p className="text-error-500 mt-1 text-sm break-words">{log.error_message}</p>
+          )}
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+          <span
+            className={
+              log.status === 'success'
+                ? 'badge preset-filled-success-500 text-xs'
+                : 'badge preset-filled-error-500 text-xs'
+            }
+          >
+            {log.status === 'success' ? 'Connected' : 'Failed'}
+          </span>
+          <span className="text-xs opacity-60">
+            {log.started_at ? new Date(log.started_at).toLocaleString() : '—'}
+          </span>
+          {log.status === 'success' && (
+            <span className="text-xs opacity-60">
+              duration: {formatDuration(log.started_at, log.ended_at)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {log.has_recording && (
+        <div>
+          <button type="button" className="btn btn-sm preset-tonal" onClick={toggleRecording}>
+            {expanded ? 'Hide recording' : 'View recording'}
+          </button>
+          {expanded && (
+            <div className="mt-2">
+              {loading && <p className="text-sm opacity-60">Loading recording…</p>}
+              {error && <p className="text-error-500 text-sm">{error}</p>}
+              {!loading && !error && recording !== null && (
+                <pre className="max-h-96 overflow-auto rounded-md bg-black p-3 text-xs whitespace-pre-wrap text-white/80">
+                  {stripAnsi(recording) || '(empty)'}
+                </pre>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </li>
+  )
+}
+
 function ConnectionHistory() {
   const [logs, setLogs] = useState<ConnectionLogEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -72,36 +163,7 @@ function ConnectionHistory() {
         {!loading && !error && logs.length > 0 && (
           <ul className="space-y-2">
             {logs.map((log) => (
-              <li key={log.id} className="card preset-filled-surface-100-900 flex items-start justify-between gap-4 p-4">
-                <div className="min-w-0">
-                  <p className="font-semibold break-words">{log.connection_name}</p>
-                  <p className="text-sm opacity-60 break-words">
-                    {log.username}@{log.host}:{log.port}
-                  </p>
-                  {log.status === 'failed' && log.error_message && (
-                    <p className="text-error-500 mt-1 text-sm break-words">{log.error_message}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                  <span
-                    className={
-                      log.status === 'success'
-                        ? 'badge preset-filled-success-500 text-xs'
-                        : 'badge preset-filled-error-500 text-xs'
-                    }
-                  >
-                    {log.status === 'success' ? 'Connected' : 'Failed'}
-                  </span>
-                  <span className="text-xs opacity-60">
-                    {log.started_at ? new Date(log.started_at).toLocaleString() : '—'}
-                  </span>
-                  {log.status === 'success' && (
-                    <span className="text-xs opacity-60">
-                      duration: {formatDuration(log.started_at, log.ended_at)}
-                    </span>
-                  )}
-                </div>
-              </li>
+              <LogEntry key={log.id} log={log} />
             ))}
           </ul>
         )}

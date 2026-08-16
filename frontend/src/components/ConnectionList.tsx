@@ -53,7 +53,8 @@ function ConnectionList({
             )}
             <div className="flex justify-end gap-2">
               <Link
-                to={`/connections/${connection.id}/terminal`}
+                to="/terminal"
+                state={{ connectionId: connection.id }}
                 className="btn btn-sm preset-filled-primary-500"
               >
                 Connect

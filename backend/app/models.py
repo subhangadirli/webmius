@@ -69,6 +69,10 @@ class ConnectionLog(db.Model):
     username = db.Column(db.String(80), nullable=False)
     status = db.Column(db.String(20), nullable=False)
     error_message = db.Column(db.Text, nullable=True)
+    # Raw terminal output captured for the session (bounded, see
+    # sockets/ssh_session.py MAX_RECORDING_CHARS); null for failed attempts
+    # and for sessions predating this feature.
+    recording = db.Column(db.Text, nullable=True)
     started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     ended_at = db.Column(db.DateTime, nullable=True)
 
