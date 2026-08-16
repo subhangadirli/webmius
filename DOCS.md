@@ -79,6 +79,7 @@ The system follows a client-server architecture:
 * username
 * email
 * password\_hash
+* role ("user" or "admin"; the first account ever registered on an instance becomes "admin", everyone after is "user")
 
 #### SSH\_Connections Table
 
@@ -93,6 +94,16 @@ The system follows a client-server architecture:
 * encrypted\_private\_key (optional, used when auth_type is "key")
 * encrypted\_private\_key\_passphrase (optional, only if the stored key is itself passphrase-protected)
 * tags (optional, comma-separated, normalized to lowercase/deduped on write)
+
+#### Connection\_Logs Table
+
+* id
+* user\_id (FK)
+* connection\_id (FK, nullable, set null if the connection is later deleted)
+* connection\_name, host, port, username — a snapshot of the connection's identity at the time of the attempt, so history stays meaningful even after the connection is edited or deleted
+* status ("success" or "failed")
+* error\_message (nullable, populated on failure)
+* started\_at, ended\_at (ended\_at is null while a session is still open)
 
 * * *
 
@@ -117,6 +128,15 @@ The system follows a client-server architecture:
 `tags` is an optional array of strings; unlike `password`/`private_key`, it's a full replace on every create/update (normalized to lowercase, trimmed, deduped) — there's no "leave unchanged" semantics since tags aren't secret and the form always round-trips the current value.
 
 All `/api/*` mutating requests (state-changing methods) additionally require an `X-CSRF-Token` header echoing the `csrf_token` cookie (double-submit pattern) — see §8.
+
+#### Connection History
+
+* GET /api/connection-logs — the current user's own connection attempts (most recent 100), each SSH session start/end and any password/key connections is logged automatically, not user-initiated
+
+#### Admin (role: "admin" only)
+
+* GET /api/admin/users — every user's id/username/email/role/connection count/created_at
+* DELETE /api/admin/users/{id} — deletes a user and cascades their connections, logs, and login sessions; blocked for self-deletion and for deleting the last remaining admin
 
 #### SSH Session
 
@@ -161,17 +181,16 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 
 * No advanced terminal features (multiplexing, session recording)
 * Limited security compared to enterprise tools (no secrets vaulting, no SSO)
-* No multi-user collaboration
+* No multi-user collaboration: role-based access control is minimal (a global "user"/"admin" distinction — admins can list and remove accounts) rather than shared connections, teams, or per-resource permissions
 
 * * *
 
 ### 12\. Future Improvements
 
-* Connection history (logs)
-* Role-based access control
-* Further terminal emulation improvements (multiplexing, session recording), mobile-friendly UI
+* Per-resource / team-based access control (shared connections, not just a global admin/user split)
+* Mobile-friendly UI as a dedicated design pass (today's responsiveness is whatever falls out of Tailwind's mobile-first defaults and Skeleton's components, not a deliberately verified mobile experience)
 
-Terminal emulation via xterm.js, SSH key-based authentication, and tagging/grouping of servers all shipped as part of the MVP (§5, §7) rather than remaining stretch goals.
+Terminal emulation via xterm.js, SSH key-based authentication, tagging/grouping of servers, connection history, and basic role-based access control all shipped as part of the MVP (§5, §7) rather than remaining stretch goals. Multiplexing and session recording remain explicitly out of scope for the MVP — see `ROADMAP.md`'s "Out of Scope for MVP" section.
 
 * * *
 

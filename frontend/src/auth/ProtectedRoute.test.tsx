@@ -44,7 +44,7 @@ describe('ProtectedRoute', () => {
   })
 
   it('renders the protected content when a user is signed in', async () => {
-    me.mockResolvedValueOnce({ id: 1, username: 'alice', email: 'alice@example.com' })
+    me.mockResolvedValueOnce({ id: 1, username: 'alice', email: 'alice@example.com', role: 'user' })
 
     renderProtected()
 

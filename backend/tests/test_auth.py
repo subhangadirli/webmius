@@ -41,6 +41,17 @@ def test_register_success(client):
     assert "password_hash" not in body
 
 
+def test_first_registered_user_becomes_admin(client):
+    response = register(client)
+    assert response.get_json()["role"] == "admin"
+
+
+def test_second_registered_user_is_not_admin(client):
+    register(client, username="alice", email="alice@example.com")
+    response = register(client, username="bob", email="bob@example.com")
+    assert response.get_json()["role"] == "user"
+
+
 def test_register_missing_fields(client):
     response = client.post("/api/register", json={"username": "bob"})
     assert response.status_code == 400

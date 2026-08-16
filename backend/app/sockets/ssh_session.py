@@ -1,11 +1,12 @@
 import threading
+from datetime import datetime, timezone
 
 import paramiko
-from flask import request
+from flask import current_app, request
 from flask_socketio import Namespace, disconnect, emit
 
-from ..extensions import socketio
-from ..models import SSHConnection
+from ..extensions import db, socketio
+from ..models import ConnectionLog, SSHConnection
 from ..security.auth import get_current_user
 from ..security.crypto import decrypt_value
 from ..security.ssh_keys import parse_private_key
@@ -17,9 +18,39 @@ _sessions_lock = threading.Lock()
 
 
 class _SSHSession:
-    def __init__(self, client, channel):
+    def __init__(self, client, channel, log_id=None):
         self.client = client
         self.channel = channel
+        self.log_id = log_id
+
+
+def _record_attempt(user, connection, status, error_message=None):
+    now = datetime.now(timezone.utc)
+    log = ConnectionLog(
+        user_id=user.id,
+        connection_id=connection.id,
+        connection_name=connection.name,
+        host=connection.host,
+        port=connection.port,
+        username=connection.username,
+        status=status,
+        error_message=error_message,
+        started_at=now,
+        ended_at=now if status == "failed" else None,
+    )
+    db.session.add(log)
+    db.session.commit()
+    return log.id
+
+
+def _mark_attempt_ended(app, log_id):
+    if log_id is None:
+        return
+    with app.app_context():
+        log = db.session.get(ConnectionLog, log_id)
+        if log is not None and log.ended_at is None:
+            log.ended_at = datetime.now(timezone.utc)
+            db.session.commit()
 
 
 def _set_session(sid, session):
@@ -48,7 +79,7 @@ def _close_session(session):
         pass
 
 
-def _stream_output(sid, channel):
+def _stream_output(sid, channel, app, log_id):
     while True:
         try:
             data = channel.recv(4096)
@@ -66,6 +97,7 @@ def _stream_output(sid, channel):
     session = _pop_session(sid)
     if session is not None:
         _close_session(session)
+    _mark_attempt_ended(app, log_id)
 
 
 class SSHSessionNamespace(Namespace):
@@ -100,11 +132,13 @@ class SSHSessionNamespace(Namespace):
 
         if connection.auth_type == "password":
             if not connection.encrypted_password:
+                _record_attempt(user, connection, "failed", "no password stored for this connection")
                 emit("ssh_error", {"message": "no password stored for this connection"})
                 return
             auth_kwargs = {"password": decrypt_value(connection.encrypted_password)}
         elif connection.auth_type == "key":
             if not connection.encrypted_private_key:
+                _record_attempt(user, connection, "failed", "no private key stored for this connection")
                 emit("ssh_error", {"message": "no private key stored for this connection"})
                 return
             try:
@@ -115,10 +149,13 @@ class SSHSessionNamespace(Namespace):
                 )
                 pkey = parse_private_key(decrypt_value(connection.encrypted_private_key), passphrase)
             except (ValueError, paramiko.PasswordRequiredException) as exc:
-                emit("ssh_error", {"message": f"stored private key is invalid: {exc}"})
+                message = f"stored private key is invalid: {exc}"
+                _record_attempt(user, connection, "failed", message)
+                emit("ssh_error", {"message": message})
                 return
             auth_kwargs = {"pkey": pkey}
         else:
+            _record_attempt(user, connection, "failed", "unsupported auth_type")
             emit("ssh_error", {"message": "unsupported auth_type"})
             return
 
@@ -135,15 +172,20 @@ class SSHSessionNamespace(Namespace):
                 **auth_kwargs,
             )
         except paramiko.AuthenticationException:
+            _record_attempt(user, connection, "failed", "SSH authentication failed")
             emit("ssh_error", {"message": "SSH authentication failed"})
             return
         except (paramiko.SSHException, OSError) as exc:
-            emit("ssh_error", {"message": f"unable to reach host: {exc}"})
+            message = f"unable to reach host: {exc}"
+            _record_attempt(user, connection, "failed", message)
+            emit("ssh_error", {"message": message})
             return
 
+        log_id = _record_attempt(user, connection, "success")
         channel = client.invoke_shell(term="xterm-256color")
-        _set_session(sid, _SSHSession(client, channel))
-        socketio.start_background_task(_stream_output, sid, channel)
+        _set_session(sid, _SSHSession(client, channel, log_id))
+        app = current_app._get_current_object()
+        socketio.start_background_task(_stream_output, sid, channel, app, log_id)
 
         emit("ssh_connected", {})
 

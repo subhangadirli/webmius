@@ -34,6 +34,12 @@ def create_app(config_object=None):
     from .routes.connections import connections_bp
     app.register_blueprint(connections_bp)
 
+    from .routes.history import history_bp
+    app.register_blueprint(history_bp)
+
+    from .routes.admin import admin_bp
+    app.register_blueprint(admin_bp)
+
     from .sockets.ssh_session import register_ssh_namespace
     register_ssh_namespace()
 

@@ -9,7 +9,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
 
 def _user_to_dict(user):
-    return {"id": user.id, "username": user.username, "email": user.email}
+    return {"id": user.id, "username": user.username, "email": user.email, "role": user.role}
 
 
 @auth_bp.post("/register")
@@ -29,7 +29,11 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify(error="email already registered"), 409
 
-    user = User(username=username, email=email, password_hash=hash_password(password))
+    # Bootstrap: the very first account on a fresh instance becomes admin,
+    # since there's no other way to reach an admin-only endpoint yet.
+    role = "admin" if User.query.count() == 0 else "user"
+
+    user = User(username=username, email=email, password_hash=hash_password(password), role=role)
     db.session.add(user)
     db.session.commit()
 

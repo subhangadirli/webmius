@@ -4,6 +4,8 @@ import Login from './pages/Login.tsx'
 import Register from './pages/Register.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import TerminalPage from './pages/TerminalPage.tsx'
+import ConnectionHistory from './pages/ConnectionHistory.tsx'
+import AdminUsers from './pages/AdminUsers.tsx'
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
 
 function App() {
@@ -25,6 +27,22 @@ function App() {
         element={
           <ProtectedRoute>
             <TerminalPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <ConnectionHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminUsers />
           </ProtectedRoute>
         }
       />

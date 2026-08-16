@@ -5,15 +5,22 @@ from .extensions import db
 
 class User(db.Model):
     __tablename__ = "users"
+    __table_args__ = (
+        db.CheckConstraint("role IN ('user', 'admin')", name="ck_users_role"),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="user")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     connections = db.relationship(
         "SSHConnection", backref="owner", cascade="all, delete-orphan"
+    )
+    connection_logs = db.relationship(
+        "ConnectionLog", backref="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
@@ -41,3 +48,29 @@ class SSHConnection(db.Model):
 
     def __repr__(self):
         return f"<SSHConnection {self.name} ({self.host})>"
+
+
+class ConnectionLog(db.Model):
+    __tablename__ = "connection_logs"
+    __table_args__ = (
+        db.CheckConstraint("status IN ('success', 'failed')", name="ck_connection_logs_status"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    connection_id = db.Column(
+        db.Integer, db.ForeignKey("ssh_connections.id", ondelete="SET NULL"), nullable=True
+    )
+    # Snapshot of the connection's identity at the time of the attempt, so the
+    # history stays meaningful even after the connection is edited or deleted.
+    connection_name = db.Column(db.String(120), nullable=False)
+    host = db.Column(db.String(255), nullable=False)
+    port = db.Column(db.Integer, nullable=False)
+    username = db.Column(db.String(80), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+    error_message = db.Column(db.Text, nullable=True)
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    ended_at = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<ConnectionLog {self.connection_name} ({self.status})>"

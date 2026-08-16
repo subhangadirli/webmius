@@ -1,7 +1,10 @@
+export type Role = 'user' | 'admin'
+
 export interface User {
   id: number
   username: string
   email: string
+  role: Role
 }
 
 export type AuthType = 'password' | 'key'
@@ -46,4 +49,28 @@ export interface SSHOutputEvent {
 
 export interface SSHErrorEvent {
   message: string
+}
+
+export type ConnectionLogStatus = 'success' | 'failed'
+
+export interface ConnectionLogEntry {
+  id: number
+  connection_id: number | null
+  connection_name: string
+  host: string
+  port: number
+  username: string
+  status: ConnectionLogStatus
+  error_message: string | null
+  started_at: string | null
+  ended_at: string | null
+}
+
+export interface AdminUser {
+  id: number
+  username: string
+  email: string
+  role: Role
+  connection_count: number
+  created_at: string | null
 }

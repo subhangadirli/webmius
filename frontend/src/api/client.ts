@@ -1,4 +1,6 @@
 import type {
+  AdminUser,
+  ConnectionLogEntry,
   ConnectionPayload,
   LoginPayload,
   RegisterPayload,
@@ -60,4 +62,7 @@ export const api = {
   updateConnection: (id: number, data: Partial<ConnectionPayload>) =>
     request<SSHConnection>(`/api/connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteConnection: (id: number) => request<null>(`/api/connections/${id}`, { method: 'DELETE' }),
+  listConnectionLogs: () => request<ConnectionLogEntry[]>('/api/connection-logs'),
+  listAdminUsers: () => request<AdminUser[]>('/api/admin/users'),
+  deleteAdminUser: (id: number) => request<null>(`/api/admin/users/${id}`, { method: 'DELETE' }),
 }

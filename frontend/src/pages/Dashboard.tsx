@@ -1,6 +1,6 @@
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext.tsx'
 import ConnectionForm from '../components/ConnectionForm.tsx'
@@ -85,6 +85,14 @@ function Dashboard() {
           </AppBar.Lead>
           <AppBar.Headline />
           <AppBar.Trail>
+            <Link to="/history" className="btn btn-sm preset-tonal">
+              History
+            </Link>
+            {user?.role === 'admin' && (
+              <Link to="/admin" className="btn btn-sm preset-tonal">
+                Users
+              </Link>
+            )}
             <span className="text-sm opacity-60">{user?.username}</span>
             <button type="button" className="btn btn-sm preset-tonal" onClick={handleLogout}>
               Log out
