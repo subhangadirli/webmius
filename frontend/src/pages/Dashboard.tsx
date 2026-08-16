@@ -84,19 +84,26 @@ function Dashboard() {
             <p className="h4">Webmius</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail className="flex-wrap justify-end">
-            <Link to="/history" className="btn btn-sm preset-tonal">
-              History
-            </Link>
-            {user?.role === 'admin' && (
-              <Link to="/admin" className="btn btn-sm preset-tonal">
-                Users
+          <AppBar.Trail className="flex-wrap items-center justify-end gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link to="/history" className="btn btn-sm preset-tonal">
+                History
               </Link>
-            )}
-            <span className="text-sm opacity-60">{user?.username}</span>
-            <button type="button" className="btn btn-sm preset-tonal" onClick={handleLogout}>
-              Log out
-            </button>
+              {user?.role === 'admin' && (
+                <Link to="/admin" className="btn btn-sm preset-tonal">
+                  Users
+                </Link>
+              )}
+            </div>
+            <div className="border-surface-500/30 flex items-center gap-2 border-l pl-3">
+              <span className="badge-icon preset-filled-primary-500 text-xs">
+                {user?.username?.[0]?.toUpperCase()}
+              </span>
+              <span className="text-sm opacity-70">{user?.username}</span>
+              <button type="button" className="btn btn-sm preset-outlined" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
           </AppBar.Trail>
         </AppBar.Toolbar>
       </AppBar>
