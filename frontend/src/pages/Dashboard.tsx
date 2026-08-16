@@ -102,7 +102,7 @@ function Dashboard() {
               <ThemeToggle />
             </div>
             <div className="border-surface-500/30 flex items-center gap-2 border-l pl-3">
-              <span className="badge-icon preset-filled-primary-500 text-xs">
+              <span className="badge-icon preset-filled-primary-700-300 text-xs">
                 {user?.username?.[0]?.toUpperCase()}
               </span>
               <span className="text-sm opacity-70">{user?.username}</span>
@@ -129,7 +129,7 @@ function Dashboard() {
           <div className="flex justify-end">
             <button
               type="button"
-              className="btn preset-filled-primary-500"
+              className="btn preset-filled-primary-700-300"
               onClick={() => setFormMode('create')}
             >
               <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={1.5} />
@@ -149,7 +149,7 @@ function Dashboard() {
                 type="button"
                 className={
                   activeTag === tag
-                    ? 'badge preset-filled-primary-500 text-xs'
+                    ? 'badge preset-filled-primary-700-300 text-xs'
                     : 'badge preset-tonal text-xs'
                 }
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}

@@ -57,7 +57,7 @@ function ConnectionList({
               <Link
                 to="/terminal"
                 state={{ connectionId: connection.id }}
-                className="btn btn-sm preset-filled-primary-500"
+                className="btn btn-sm preset-filled-primary-700-300"
               >
                 <HugeiconsIcon icon={TerminalIcon} size={16} strokeWidth={1.5} />
                 Connect

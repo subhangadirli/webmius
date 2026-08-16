@@ -213,7 +213,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
         <button type="button" className="btn preset-tonal" onClick={onCancel} disabled={submitting}>
           Cancel
         </button>
-        <button type="submit" className="btn preset-filled-primary-500" disabled={submitting}>
+        <button type="submit" className="btn preset-filled-primary-700-300" disabled={submitting}>
           {submitting ? 'Saving…' : isEditing ? 'Save changes' : 'Add connection'}
         </button>
       </div>

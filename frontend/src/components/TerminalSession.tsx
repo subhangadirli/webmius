@@ -81,7 +81,7 @@ function TerminalSession({ connectionId, active, onStatusChange }: TerminalSessi
           </span>
           <button
             type="button"
-            className="btn btn-sm preset-filled-primary-500"
+            className="btn btn-sm preset-filled-primary-700-300"
             onClick={() => setAttempt((n) => n + 1)}
           >
             <HugeiconsIcon icon={Refresh01Icon} size={16} strokeWidth={1.5} />
