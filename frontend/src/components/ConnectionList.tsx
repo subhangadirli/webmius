@@ -6,9 +6,16 @@ interface ConnectionListProps {
   onEdit: (connection: SSHConnection) => void
   onDelete: (connection: SSHConnection) => void
   deletingId?: number | null
+  onTagClick?: (tag: string) => void
 }
 
-function ConnectionList({ connections, onEdit, onDelete, deletingId = null }: ConnectionListProps) {
+function ConnectionList({
+  connections,
+  onEdit,
+  onDelete,
+  deletingId = null,
+  onTagClick,
+}: ConnectionListProps) {
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
       {connections.map((connection) => {
@@ -30,6 +37,20 @@ function ConnectionList({ connections, onEdit, onDelete, deletingId = null }: Co
                 {connection.auth_type === 'key' ? 'SSH key' : 'Password'}
               </span>
             </div>
+            {connection.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {connection.tags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    className="badge preset-tonal-primary text-xs"
+                    onClick={() => onTagClick?.(tag)}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <Link
                 to={`/connections/${connection.id}/terminal`}

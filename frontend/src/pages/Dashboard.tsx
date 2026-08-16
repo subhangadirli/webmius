@@ -19,6 +19,7 @@ function Dashboard() {
   const [formMode, setFormMode] = useState<FormMode>(null)
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [activeTag, setActiveTag] = useState<string | null>(null)
 
   const loadConnections = async () => {
     setLoading(true)
@@ -70,6 +71,11 @@ function Dashboard() {
 
   const isEditing = formMode !== null && formMode !== 'create'
 
+  const allTags = [...new Set(connections.flatMap((c) => c.tags))].sort()
+  const visibleConnections = activeTag
+    ? connections.filter((c) => c.tags.includes(activeTag))
+    : connections
+
   return (
     <div className="min-h-screen">
       <AppBar>
@@ -112,6 +118,35 @@ function Dashboard() {
 
         {deleteError && <p className="text-error-500 text-sm">{deleteError}</p>}
 
+        {!formMode && allTags.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm opacity-60">Filter:</span>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className={
+                  activeTag === tag
+                    ? 'badge preset-filled-primary-500 text-xs'
+                    : 'badge preset-tonal text-xs'
+                }
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              >
+                {tag}
+              </button>
+            ))}
+            {activeTag && (
+              <button
+                type="button"
+                className="btn btn-sm preset-tonal"
+                onClick={() => setActiveTag(null)}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         {loading && (
           <div className="flex flex-col items-center gap-3 p-12 text-center">
             <p className="opacity-60">Loading connections…</p>
@@ -135,12 +170,22 @@ function Dashboard() {
           </div>
         )}
 
-        {!loading && !loadError && connections.length > 0 && (
+        {!loading && !loadError && connections.length > 0 && visibleConnections.length === 0 && (
+          <div className="card preset-filled-surface-100-900 flex flex-col items-center gap-3 p-12 text-center">
+            <h2 className="h3">No connections tagged &ldquo;{activeTag}&rdquo;</h2>
+            <button type="button" className="btn preset-tonal" onClick={() => setActiveTag(null)}>
+              Clear filter
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && visibleConnections.length > 0 && (
           <ConnectionList
-            connections={connections}
+            connections={visibleConnections}
             deletingId={deletingId}
             onEdit={(connection) => setFormMode(connection)}
             onDelete={handleDelete}
+            onTagClick={setActiveTag}
           />
         )}
       </main>

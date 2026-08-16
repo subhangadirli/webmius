@@ -36,6 +36,7 @@ class SSHConnection(db.Model):
     encrypted_password = db.Column(db.Text, nullable=True)
     encrypted_private_key = db.Column(db.Text, nullable=True)
     encrypted_private_key_passphrase = db.Column(db.Text, nullable=True)
+    tags = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):

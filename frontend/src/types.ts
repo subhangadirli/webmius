@@ -13,6 +13,7 @@ export interface SSHConnection {
   port: number
   username: string
   auth_type: AuthType
+  tags: string[]
   created_at: string | null
 }
 
@@ -36,6 +37,7 @@ export interface ConnectionPayload {
   private_key?: string
   private_key_passphrase?: string
   auth_type?: AuthType
+  tags?: string[]
 }
 
 export interface SSHOutputEvent {

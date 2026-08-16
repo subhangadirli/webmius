@@ -92,6 +92,7 @@ The system follows a client-server architecture:
 * encrypted\_password (optional, used when auth_type is "password")
 * encrypted\_private\_key (optional, used when auth_type is "key")
 * encrypted\_private\_key\_passphrase (optional, only if the stored key is itself passphrase-protected)
+* tags (optional, comma-separated, normalized to lowercase/deduped on write)
 
 * * *
 
@@ -106,12 +107,14 @@ The system follows a client-server architecture:
 
 #### SSH Connections
 
-* GET /api/connections
+* GET /api/connections — accepts an optional `?tag=` query param to filter by tag
 * POST /api/connections
 * PUT /api/connections/{id}
 * DELETE /api/connections/{id}
 
 `auth_type` is `"password"` or `"key"`. Password connections take a `password` field; key connections take a `private_key` (PEM/OpenSSH format) and an optional `private_key_passphrase` if the key itself is encrypted. The key is parsed and validated server-side at save time (unrecognized formats or a missing/wrong passphrase are rejected with a 400), not just at connect time. As with `password`, omitting `private_key`/`private_key_passphrase` on an update leaves the stored value unchanged.
+
+`tags` is an optional array of strings; unlike `password`/`private_key`, it's a full replace on every create/update (normalized to lowercase, trimmed, deduped) — there's no "leave unchanged" semantics since tags aren't secret and the form always round-trips the current value.
 
 All `/api/*` mutating requests (state-changing methods) additionally require an `X-CSRF-Token` header echoing the `csrf_token` cookie (double-submit pattern) — see §8.
 
@@ -164,12 +167,11 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 
 ### 12\. Future Improvements
 
-* Tagging / grouping servers
 * Connection history (logs)
 * Role-based access control
 * Further terminal emulation improvements (multiplexing, session recording), mobile-friendly UI
 
-Terminal emulation via xterm.js and SSH key-based authentication both shipped as part of the MVP (§5, §7) rather than remaining stretch goals.
+Terminal emulation via xterm.js, SSH key-based authentication, and tagging/grouping of servers all shipped as part of the MVP (§5, §7) rather than remaining stretch goals.
 
 * * *
 

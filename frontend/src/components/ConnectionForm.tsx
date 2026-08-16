@@ -10,6 +10,7 @@ interface FormState {
   password: string
   privateKey: string
   privateKeyPassphrase: string
+  tags: string
 }
 
 const emptyForm: FormState = {
@@ -21,6 +22,7 @@ const emptyForm: FormState = {
   password: '',
   privateKey: '',
   privateKeyPassphrase: '',
+  tags: '',
 }
 
 function toFormState(connection?: SSHConnection): FormState {
@@ -34,6 +36,7 @@ function toFormState(connection?: SSHConnection): FormState {
     password: '',
     privateKey: '',
     privateKeyPassphrase: '',
+    tags: connection.tags.join(', '),
   }
 }
 
@@ -67,6 +70,10 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
         username: form.username,
         port: Number(form.port) || 22,
         auth_type: form.authType,
+        tags: form.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter(Boolean),
       }
       if (form.authType === 'password') {
         if (form.password) payload.password = form.password
@@ -132,6 +139,18 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             value={form.username}
             onChange={handleChange}
             required
+          />
+        </label>
+        <label className="label sm:col-span-2">
+          <span className="label-text">
+            Tags <span className="opacity-60">(comma-separated, e.g. "prod, web")</span>
+          </span>
+          <input
+            className="input"
+            type="text"
+            name="tags"
+            value={form.tags}
+            onChange={handleChange}
           />
         </label>
         <label className="label">

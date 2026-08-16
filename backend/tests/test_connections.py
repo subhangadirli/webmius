@@ -262,3 +262,53 @@ def test_update_connection_rejects_invalid_key(client):
         headers=csrf_headers(client),
     )
     assert response.status_code == 400
+
+
+def test_create_connection_with_tags(client):
+    register_and_login(client)
+    response = create_connection(client, tags=["Prod", "web", "prod"])
+    assert response.status_code == 201
+    assert response.get_json()["tags"] == ["prod", "web"]
+
+
+def test_create_connection_without_tags_returns_empty_list(client):
+    register_and_login(client)
+    response = create_connection(client)
+    assert response.get_json()["tags"] == []
+
+
+def test_update_connection_tags(client):
+    register_and_login(client)
+    created = create_connection(client).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"tags": ["staging", " db "]},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["tags"] == ["staging", "db"]
+
+
+def test_update_connection_clears_tags_with_empty_list(client):
+    register_and_login(client)
+    created = create_connection(client, tags=["staging"]).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"tags": []},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["tags"] == []
+
+
+def test_list_connections_filtered_by_tag(client):
+    register_and_login(client)
+    create_connection(client, name="web-box", tags=["web", "prod"])
+    create_connection(client, name="db-box", tags=["db", "prod"])
+
+    response = client.get("/api/connections?tag=web")
+    assert response.status_code == 200
+    names = [c["name"] for c in response.get_json()]
+    assert names == ["web-box"]

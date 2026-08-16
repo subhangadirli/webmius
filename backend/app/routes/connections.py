@@ -10,6 +10,27 @@ from ..security.ssh_keys import parse_private_key
 connections_bp = Blueprint("connections", __name__, url_prefix="/api")
 
 
+def _parse_tags(stored):
+    if not stored:
+        return []
+    return stored.split(",")
+
+
+def _normalize_tags(raw):
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        raw = raw.split(",")
+    if not isinstance(raw, list):
+        return []
+    tags = []
+    for tag in raw:
+        tag = str(tag).strip().lower()
+        if tag and tag not in tags:
+            tags.append(tag)
+    return tags
+
+
 def _connection_to_dict(connection):
     return {
         "id": connection.id,
@@ -18,6 +39,7 @@ def _connection_to_dict(connection):
         "port": connection.port,
         "username": connection.username,
         "auth_type": connection.auth_type,
+        "tags": _parse_tags(connection.tags),
         "created_at": connection.created_at.isoformat() if connection.created_at else None,
     }
 
@@ -45,6 +67,9 @@ def list_connections():
         .order_by(SSHConnection.created_at.desc())
         .all()
     )
+    tag_filter = (request.args.get("tag") or "").strip().lower()
+    if tag_filter:
+        connections = [c for c in connections if tag_filter in _parse_tags(c.tags)]
     return jsonify([_connection_to_dict(c) for c in connections]), 200
 
 
@@ -82,6 +107,8 @@ def create_connection():
     except (TypeError, ValueError):
         return jsonify(error="port must be an integer"), 400
 
+    tags = _normalize_tags(data.get("tags"))
+
     connection = SSHConnection(
         user_id=g.current_user.id,
         name=name,
@@ -94,6 +121,7 @@ def create_connection():
         encrypted_private_key_passphrase=(
             encrypt_value(private_key_passphrase) if auth_type == "key" and private_key_passphrase else None
         ),
+        tags=",".join(tags) if tags else None,
     )
     db.session.add(connection)
     db.session.commit()
@@ -139,6 +167,10 @@ def update_connection(connection_id):
         if auth_type not in ("password", "key"):
             return jsonify(error="auth_type must be 'password' or 'key'"), 400
         connection.auth_type = auth_type
+
+    if "tags" in data:
+        tags = _normalize_tags(data.get("tags"))
+        connection.tags = ",".join(tags) if tags else None
 
     if "password" in data and data.get("password"):
         connection.encrypted_password = encrypt_value(data["password"])
