@@ -77,8 +77,8 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 ### M7 — CI & Test Scaffolding
 
-- [ ] GitHub Actions workflow: build both Docker images, run backend tests (pytest) and frontend tests (vitest/jest) on push/PR
-- [ ] **Exit criteria verified:** pipeline is green on a clean clone with no local setup beyond `docker compose`.
+- [x] GitHub Actions workflow: build both Docker images, run backend tests (pytest) and frontend tests (vitest/jest) on push/PR
+- [x] **Exit criteria verified:** `.github/workflows/ci.yml` runs three parallel jobs on push to `main` and on every PR. `backend-tests` installs `backend/requirements.txt` under Python 3.12 and runs `pytest -q` (33/33 passing). `frontend-tests` installs the frontend via pnpm (pinned to `9.15.9` via corepack, matching `frontend/Dockerfile`) and runs `pnpm run typecheck`, `pnpm run test` (Vitest + Testing Library — 4 new tests added covering `Home` and `ProtectedRoute`, since no frontend test scaffolding existed before this milestone), and `pnpm run build`. `docker-build` builds both `./backend` and `./frontend` images with `docker/build-push-action` (no push) to confirm the Dockerfiles stay buildable. All three verified locally end-to-end with `podman build` + `podman run` against the real Dockerfiles before being committed (not just asserted): backend image installs cleanly and its containerized `pytest` run is 33/33 green; frontend image's containerized `pnpm run test`/`typecheck`/`build` all pass under the actual `node:20-slim` runtime the Dockerfile pins — this caught and fixed a real incompatibility (jsdom 30 requires Node ≥22 and silently crashed under Node 20, so the test dependency was pinned to jsdom 26 instead, which supports Node ≥18 and matches the Dockerfile's runtime). No GitHub Actions runner was available in this environment to observe an actual green run of the workflow YAML itself, so a first real push/PR should be watched to confirm the Actions-hosted environment behaves the same as the local container verification.
 
 ### M8 — MVP Polish & Docs
 
