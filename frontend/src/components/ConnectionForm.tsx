@@ -96,7 +96,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
       {error && <p className="text-error-500 text-sm">{error}</p>}
 
       <fieldset className="fieldset grid gap-4 sm:grid-cols-2">
-        <label className="label sm:col-span-2">
+        <label className="label min-w-0 sm:col-span-2">
           <span className="label-text">Name</span>
           <input
             className="input"
@@ -107,7 +107,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             required
           />
         </label>
-        <label className="label">
+        <label className="label min-w-0">
           <span className="label-text">Host</span>
           <input
             className="input"
@@ -118,7 +118,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             required
           />
         </label>
-        <label className="label">
+        <label className="label min-w-0">
           <span className="label-text">Port</span>
           <input
             className="input"
@@ -130,7 +130,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             required
           />
         </label>
-        <label className="label">
+        <label className="label min-w-0">
           <span className="label-text">Username</span>
           <input
             className="input"
@@ -141,7 +141,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             required
           />
         </label>
-        <label className="label sm:col-span-2">
+        <label className="label min-w-0 sm:col-span-2">
           <span className="label-text">
             Tags <span className="opacity-60">(comma-separated, e.g. "prod, web")</span>
           </span>
@@ -153,7 +153,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
             onChange={handleChange}
           />
         </label>
-        <label className="label">
+        <label className="label min-w-0">
           <span className="label-text">Authentication</span>
           <select className="select" name="authType" value={form.authType} onChange={handleChange}>
             <option value="password">Password</option>
@@ -162,7 +162,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
         </label>
 
         {form.authType === 'password' && (
-          <label className="label">
+          <label className="label min-w-0">
             <span className="label-text">
               Password{isEditing && <span className="opacity-60"> (leave blank to keep unchanged)</span>}
             </span>
@@ -179,7 +179,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
 
         {form.authType === 'key' && (
           <>
-            <label className="label sm:col-span-2">
+            <label className="label min-w-0 sm:col-span-2">
               <span className="label-text">
                 Private key{isEditing && <span className="opacity-60"> (leave blank to keep unchanged)</span>}
               </span>
@@ -193,7 +193,7 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
                 required={!isEditing}
               />
             </label>
-            <label className="label sm:col-span-2">
+            <label className="label min-w-0 sm:col-span-2">
               <span className="label-text">
                 Key passphrase <span className="opacity-60">(only if the key is encrypted)</span>
               </span>
