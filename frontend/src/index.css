@@ -1,20 +1,38 @@
 @import 'tailwindcss';
 
+/*
+ * Skeleton's utilities (buttons.css, cards.css, chips.css, typography.css,
+ * ...) style dark mode with Tailwind's `dark:`/`@variant dark` utility,
+ * which by default compiles to `@media (prefers-color-scheme: dark)` — it
+ * only ever follows the OS setting. Our manual toggle (src/theme/
+ * ThemeContext.tsx) sets a `data-mode` attribute on <html> instead, so
+ * without this, anything in Skeleton keyed off `dark:` (eg. the `.anchor`
+ * link color) ignores the manual toggle and can end up with a light-mode
+ * color on a dark-mode background (or vice versa) whenever the manual
+ * choice disagrees with the OS preference — a real contrast bug, not just
+ * a cosmetic mismatch. Redefining the `dark` variant to key off `data-mode`
+ * makes every Skeleton utility that uses `dark:` follow the manual toggle.
+ */
+@custom-variant dark (&:is([data-mode='dark'], [data-mode='dark'] *));
+
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-react';
 @import '@skeletonlabs/skeleton/themes/cerberus';
 
 /*
- * Skeleton's own light/dark switch (in its base globals.css) is
- * `@media (prefers-color-scheme: dark)`, which only follows the OS setting.
- * These rules add an explicit `data-mode` override on <html> (set by
- * src/theme/ThemeContext.tsx) so a manual toggle can win regardless of OS
- * preference — the attribute selector is more specific than the plain
- * `:root` Skeleton's media query targets, so it always takes precedence.
+ * Skeleton's own `color-scheme` (in its base globals.css) is also set via
+ * `@media (prefers-color-scheme: dark)`. This explicit `data-mode` override
+ * lets the manual toggle win regardless of OS preference for `light-dark()`
+ * -based tokens too — the attribute selector is more specific than the
+ * plain `:root` Skeleton's media query targets, so it always takes
+ * precedence.
  */
 :root[data-mode='light'] {
   color-scheme: light;
 }
 :root[data-mode='dark'] {
   color-scheme: dark;
+}
+:root[data-mode='dark'] a.anchor {
+  color: var(--color-primary-400);
 }
