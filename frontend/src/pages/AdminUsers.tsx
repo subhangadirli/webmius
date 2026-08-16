@@ -61,12 +61,12 @@ function AdminUsers() {
   return (
     <div className="min-h-screen">
       <AppBar>
-        <AppBar.Toolbar className="grid-cols-[auto_1fr_auto]">
+        <AppBar.Toolbar className="grid-cols-1 gap-2 sm:grid-cols-[auto_1fr_auto]">
           <AppBar.Lead>
             <p className="h4">Users</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail>
+          <AppBar.Trail className="flex-wrap justify-end">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
             </Link>
@@ -97,19 +97,19 @@ function AdminUsers() {
               return (
                 <li
                   key={target.id}
-                  className="card preset-filled-surface-100-900 flex items-center justify-between gap-4 p-4"
+                  className="card preset-filled-surface-100-900 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <p className="font-semibold">
+                  <div className="min-w-0">
+                    <p className="font-semibold break-words">
                       {target.username}
                       {isSelf && <span className="opacity-60"> (you)</span>}
                     </p>
-                    <p className="text-sm opacity-60">{target.email}</p>
+                    <p className="text-sm opacity-60 break-words">{target.email}</p>
                     <p className="text-xs opacity-60">
                       {target.connection_count} connection{target.connection_count === 1 ? '' : 's'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between gap-2 sm:justify-end">
                     <span className="badge preset-tonal text-xs">{target.role}</span>
                     <button
                       type="button"

@@ -79,12 +79,12 @@ function Dashboard() {
   return (
     <div className="min-h-screen">
       <AppBar>
-        <AppBar.Toolbar className="grid-cols-[auto_1fr_auto]">
+        <AppBar.Toolbar className="grid-cols-1 gap-2 sm:grid-cols-[auto_1fr_auto]">
           <AppBar.Lead>
             <p className="h4">Webmius</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail>
+          <AppBar.Trail className="flex-wrap justify-end">
             <Link to="/history" className="btn btn-sm preset-tonal">
               History
             </Link>

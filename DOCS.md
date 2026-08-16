@@ -188,9 +188,8 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 ### 12\. Future Improvements
 
 * Per-resource / team-based access control (shared connections, not just a global admin/user split)
-* Mobile-friendly UI as a dedicated design pass (today's responsiveness is whatever falls out of Tailwind's mobile-first defaults and Skeleton's components, not a deliberately verified mobile experience)
 
-Terminal emulation via xterm.js, SSH key-based authentication, tagging/grouping of servers, connection history, and basic role-based access control all shipped as part of the MVP (§5, §7) rather than remaining stretch goals. Multiplexing and session recording remain explicitly out of scope for the MVP — see `ROADMAP.md`'s "Out of Scope for MVP" section.
+Terminal emulation via xterm.js, SSH key-based authentication, tagging/grouping of servers, connection history, basic role-based access control, and a verified mobile-responsive UI all shipped as part of the MVP (§5, §7) rather than remaining stretch goals. Multiplexing and session recording remain explicitly out of scope for the MVP — see `ROADMAP.md`'s "Out of Scope for MVP" section.
 
 * * *
 

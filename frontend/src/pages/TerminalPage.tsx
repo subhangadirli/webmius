@@ -68,7 +68,7 @@ function TerminalPage() {
 
   return (
     <div className="flex h-screen flex-col bg-black">
-      <div className="flex items-center justify-between gap-4 border-b border-white/10 p-3">
+      <div className="flex items-start justify-between gap-3 border-b border-white/10 p-3">
         <Link to="/dashboard" className="btn btn-sm preset-tonal">
           Back
         </Link>

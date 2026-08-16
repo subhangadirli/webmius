@@ -23,17 +23,17 @@ function ConnectionList({
         return (
           <li
             key={connection.id}
-            className="card preset-filled-surface-100-900 space-y-2 p-4"
+            className="card preset-filled-surface-100-900 min-w-0 space-y-2 p-4"
             aria-busy={isDeleting}
           >
             <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="font-semibold">{connection.name}</p>
-                <p className="text-sm opacity-60">
+              <div className="min-w-0">
+                <p className="font-semibold break-words">{connection.name}</p>
+                <p className="text-sm opacity-60 break-words">
                   {connection.username}@{connection.host}:{connection.port}
                 </p>
               </div>
-              <span className="badge preset-tonal text-xs">
+              <span className="badge preset-tonal shrink-0 text-xs">
                 {connection.auth_type === 'key' ? 'SSH key' : 'Password'}
               </span>
             </div>

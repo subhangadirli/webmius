@@ -36,12 +36,12 @@ function ConnectionHistory() {
   return (
     <div className="min-h-screen">
       <AppBar>
-        <AppBar.Toolbar className="grid-cols-[auto_1fr_auto]">
+        <AppBar.Toolbar className="grid-cols-1 gap-2 sm:grid-cols-[auto_1fr_auto]">
           <AppBar.Lead>
             <p className="h4">Connection history</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail>
+          <AppBar.Trail className="flex-wrap justify-end">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
             </Link>
@@ -73,16 +73,16 @@ function ConnectionHistory() {
           <ul className="space-y-2">
             {logs.map((log) => (
               <li key={log.id} className="card preset-filled-surface-100-900 flex items-start justify-between gap-4 p-4">
-                <div>
-                  <p className="font-semibold">{log.connection_name}</p>
-                  <p className="text-sm opacity-60">
+                <div className="min-w-0">
+                  <p className="font-semibold break-words">{log.connection_name}</p>
+                  <p className="text-sm opacity-60 break-words">
                     {log.username}@{log.host}:{log.port}
                   </p>
                   {log.status === 'failed' && log.error_message && (
-                    <p className="text-error-500 mt-1 text-sm">{log.error_message}</p>
+                    <p className="text-error-500 mt-1 text-sm break-words">{log.error_message}</p>
                   )}
                 </div>
-                <div className="flex flex-col items-end gap-1 text-right">
+                <div className="flex shrink-0 flex-col items-end gap-1 text-right">
                   <span
                     className={
                       log.status === 'success'
