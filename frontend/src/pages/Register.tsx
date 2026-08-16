@@ -33,7 +33,7 @@ function Register() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center p-4">
+    <main className="relative flex min-h-screen items-center justify-center p-4">
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
@@ -104,7 +104,7 @@ function Register() {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-3 flex items-center opacity-50 hover:opacity-100"
+                  className="absolute inset-y-0 right-1 flex items-center px-2 opacity-50 hover:opacity-100"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -113,20 +113,20 @@ function Register() {
               </div>
             </label>
 
-            <button className="btn preset-filled-primary-500 w-full" type="submit" disabled={submitting}>
+            <button className="btn preset-filled-primary-700-300 w-full" type="submit" disabled={submitting}>
               {submitting ? 'Creating account…' : 'Register'}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-sm opacity-60">
-          Already have an account?{' '}
+        <p className="text-center text-sm">
+          <span className="opacity-60">Already have an account? </span>
           <Link className="anchor" to="/login">
             Log in
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }
 

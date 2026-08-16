@@ -107,7 +107,7 @@ function TerminalWorkspace() {
                   event.stopPropagation()
                   closeTab(tab.id)
                 }}
-                className="opacity-60 hover:opacity-100"
+                className="-my-2 p-2 opacity-60 hover:opacity-100"
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={1.5} />
               </button>
@@ -118,7 +118,7 @@ function TerminalWorkspace() {
         <div className="relative shrink-0">
           <button
             type="button"
-            className="btn btn-sm preset-filled-primary-500"
+            className="btn btn-sm preset-filled-primary-700-300"
             onClick={() => setPickerOpen((v) => !v)}
           >
             <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={1.5} />
@@ -144,7 +144,7 @@ function TerminalWorkspace() {
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1">
         {tabs.length === 0 && (
           <div className="flex h-full items-center justify-center text-center">
             <div>
@@ -167,7 +167,7 @@ function TerminalWorkspace() {
             />
           </div>
         ))}
-      </div>
+      </main>
     </div>
   )
 }

@@ -16,7 +16,7 @@ function Home() {
   }, [])
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center p-4">
+    <main className="relative flex min-h-screen items-center justify-center p-4">
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
@@ -30,12 +30,12 @@ function Home() {
         {!loading && (
           <div className="flex justify-center gap-2">
             {user ? (
-              <Link className="btn preset-filled-primary-500" to="/dashboard">
+              <Link className="btn preset-filled-primary-700-300" to="/dashboard">
                 Go to dashboard
               </Link>
             ) : (
               <>
-                <Link className="btn preset-filled-primary-500" to="/login">
+                <Link className="btn preset-filled-primary-700-300" to="/login">
                   Log in
                 </Link>
                 <Link className="btn preset-tonal" to="/register">
@@ -46,7 +46,7 @@ function Home() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   )
 }
 
