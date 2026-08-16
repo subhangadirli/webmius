@@ -1,52 +1,67 @@
+import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
-import Home from './pages/Home.tsx'
-import Login from './pages/Login.tsx'
-import Register from './pages/Register.tsx'
-import Dashboard from './pages/Dashboard.tsx'
-import TerminalWorkspace from './pages/TerminalWorkspace.tsx'
-import ConnectionHistory from './pages/ConnectionHistory.tsx'
-import AdminUsers from './pages/AdminUsers.tsx'
 import ProtectedRoute from './auth/ProtectedRoute.tsx'
+
+const Home = lazy(() => import('./pages/Home.tsx'))
+const Login = lazy(() => import('./pages/Login.tsx'))
+const Register = lazy(() => import('./pages/Register.tsx'))
+const Dashboard = lazy(() => import('./pages/Dashboard.tsx'))
+const TerminalWorkspace = lazy(() => import('./pages/TerminalWorkspace.tsx'))
+const ConnectionHistory = lazy(() => import('./pages/ConnectionHistory.tsx'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers.tsx'))
+
+// Route components are code-split (see the lazy() calls above) so that, eg.,
+// loading /dashboard doesn't also pull in xterm.js and socket.io-client for
+// /terminal, or the admin page's code, before either is ever visited.
+function RouteFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <p className="opacity-60">Loading…</p>
+    </div>
+  )
+}
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/terminal"
-        element={
-          <ProtectedRoute>
-            <TerminalWorkspace />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/history"
-        element={
-          <ProtectedRoute>
-            <ConnectionHistory />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute>
-            <AdminUsers />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/terminal"
+          element={
+            <ProtectedRoute>
+              <TerminalWorkspace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute>
+              <ConnectionHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Suspense>
   )
 }
 
