@@ -1,3 +1,5 @@
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete02Icon, PencilEdit02Icon, TerminalIcon } from '@hugeicons/core-free-icons'
 import { Link } from 'react-router-dom'
 import type { SSHConnection } from '../types'
 
@@ -57,6 +59,7 @@ function ConnectionList({
                 state={{ connectionId: connection.id }}
                 className="btn btn-sm preset-filled-primary-500"
               >
+                <HugeiconsIcon icon={TerminalIcon} size={16} strokeWidth={1.5} />
                 Connect
               </Link>
               <button
@@ -65,6 +68,7 @@ function ConnectionList({
                 onClick={() => onEdit(connection)}
                 disabled={isDeleting}
               >
+                <HugeiconsIcon icon={PencilEdit02Icon} size={16} strokeWidth={1.5} />
                 Edit
               </button>
               <button
@@ -73,6 +77,7 @@ function ConnectionList({
                 onClick={() => onDelete(connection)}
                 disabled={isDeleting}
               >
+                <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
                 {isDeleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>

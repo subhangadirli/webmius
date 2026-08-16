@@ -4,6 +4,24 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Webmius</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕸️</text></svg>"
+    />
+    <script>
+      // Set the color-scheme before first paint so the page never flashes the
+      // wrong mode while React boots. Kept in sync with src/theme/ThemeContext.tsx.
+      ;(function () {
+        var stored = localStorage.getItem('webmius-theme-mode')
+        var mode =
+          stored === 'light' || stored === 'dark'
+            ? stored
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+        document.documentElement.dataset.mode = mode
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

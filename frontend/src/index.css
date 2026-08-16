@@ -3,3 +3,18 @@
 @import '@skeletonlabs/skeleton';
 @import '@skeletonlabs/skeleton-react';
 @import '@skeletonlabs/skeleton/themes/cerberus';
+
+/*
+ * Skeleton's own light/dark switch (in its base globals.css) is
+ * `@media (prefers-color-scheme: dark)`, which only follows the OS setting.
+ * These rules add an explicit `data-mode` override on <html> (set by
+ * src/theme/ThemeContext.tsx) so a manual toggle can win regardless of OS
+ * preference — the attribute selector is more specific than the plain
+ * `:root` Skeleton's media query targets, so it always takes precedence.
+ */
+:root[data-mode='light'] {
+  color-scheme: light;
+}
+:root[data-mode='dark'] {
+  color-scheme: dark;
+}

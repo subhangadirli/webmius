@@ -1,3 +1,5 @@
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel01Icon, PlusSignIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { api } from '../api/client'
@@ -32,6 +34,22 @@ function TerminalWorkspace() {
   useEffect(() => {
     api.listConnections().then(setConnections).catch(() => {})
   }, [])
+
+  // The browser reserves shortcuts like Ctrl/Cmd+W and Ctrl/Cmd+R for itself —
+  // no web page can intercept or remap them — so the only thing we can do to
+  // stop an active session from being closed by muscle memory is warn before
+  // the tab actually unloads.
+  useEffect(() => {
+    const hasActiveSession = tabs.some((t) => t.status === 'connected' || t.status === 'connecting')
+    if (!hasActiveSession) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [tabs])
 
   const openTab = (connectionId: number) => {
     const tabId = `${connectionId}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -91,7 +109,7 @@ function TerminalWorkspace() {
                 }}
                 className="opacity-60 hover:opacity-100"
               >
-                ×
+                <HugeiconsIcon icon={Cancel01Icon} size={14} strokeWidth={1.5} />
               </button>
             </span>
           ))}
@@ -103,7 +121,8 @@ function TerminalWorkspace() {
             className="btn btn-sm preset-filled-primary-500"
             onClick={() => setPickerOpen((v) => !v)}
           >
-            + New
+            <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={1.5} />
+            New
           </button>
           {pickerOpen && (
             <div className="preset-filled-surface-100-900 absolute right-0 top-full z-10 mt-1 w-56 rounded-md p-1 shadow-lg">

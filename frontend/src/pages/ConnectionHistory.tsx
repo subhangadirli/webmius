@@ -1,7 +1,10 @@
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Refresh01Icon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import ThemeToggle from '../components/ThemeToggle.tsx'
 import type { ConnectionLogEntry } from '../types'
 
 function formatDuration(startedAt: string | null, endedAt: string | null): string {
@@ -84,6 +87,7 @@ function LogEntry({ log }: { log: ConnectionLogEntry }) {
       {log.has_recording && (
         <div>
           <button type="button" className="btn btn-sm preset-tonal" onClick={toggleRecording}>
+            <HugeiconsIcon icon={expanded ? ViewOffIcon : ViewIcon} size={16} strokeWidth={1.5} />
             {expanded ? 'Hide recording' : 'View recording'}
           </button>
           {expanded && (
@@ -132,10 +136,11 @@ function ConnectionHistory() {
             <p className="h4">Connection history</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail className="flex-wrap justify-end">
+          <AppBar.Trail className="flex-wrap items-center justify-end gap-2">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
             </Link>
+            <ThemeToggle />
           </AppBar.Trail>
         </AppBar.Toolbar>
       </AppBar>
@@ -148,6 +153,7 @@ function ConnectionHistory() {
             <h2 className="h3">Couldn&rsquo;t load connection history</h2>
             <p className="text-error-500 text-sm">{error}</p>
             <button type="button" className="btn preset-tonal" onClick={loadLogs}>
+              <HugeiconsIcon icon={Refresh01Icon} size={16} strokeWidth={1.5} />
               Retry
             </button>
           </div>

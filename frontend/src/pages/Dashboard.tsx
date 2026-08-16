@@ -1,3 +1,5 @@
+import { HugeiconsIcon } from '@hugeicons/react'
+import { PlusSignIcon, Refresh01Icon } from '@hugeicons/core-free-icons'
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -5,6 +7,7 @@ import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext.tsx'
 import ConnectionForm from '../components/ConnectionForm.tsx'
 import ConnectionList from '../components/ConnectionList.tsx'
+import ThemeToggle from '../components/ThemeToggle.tsx'
 import type { ConnectionPayload, SSHConnection } from '../types'
 
 type FormMode = null | 'create' | SSHConnection
@@ -81,7 +84,9 @@ function Dashboard() {
       <AppBar>
         <AppBar.Toolbar className="grid-cols-1 gap-2 sm:grid-cols-[auto_1fr_auto]">
           <AppBar.Lead>
-            <p className="h4">Webmius</p>
+            <p className="h4">
+              <span aria-hidden="true">🕸️</span> Webmius
+            </p>
           </AppBar.Lead>
           <AppBar.Headline />
           <AppBar.Trail className="flex-wrap items-center justify-end gap-3">
@@ -94,6 +99,7 @@ function Dashboard() {
                   Users
                 </Link>
               )}
+              <ThemeToggle />
             </div>
             <div className="border-surface-500/30 flex items-center gap-2 border-l pl-3">
               <span className="badge-icon preset-filled-primary-500 text-xs">
@@ -126,6 +132,7 @@ function Dashboard() {
               className="btn preset-filled-primary-500"
               onClick={() => setFormMode('create')}
             >
+              <HugeiconsIcon icon={PlusSignIcon} size={16} strokeWidth={1.5} />
               Add connection
             </button>
           </div>
@@ -173,6 +180,7 @@ function Dashboard() {
             <h2 className="h3">Couldn&rsquo;t load your connections</h2>
             <p className="text-error-500 text-sm">{loadError}</p>
             <button type="button" className="btn preset-tonal" onClick={loadConnections}>
+              <HugeiconsIcon icon={Refresh01Icon} size={16} strokeWidth={1.5} />
               Retry
             </button>
           </div>

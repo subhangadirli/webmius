@@ -1,8 +1,11 @@
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Delete02Icon, Refresh01Icon } from '@hugeicons/core-free-icons'
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext.tsx'
+import ThemeToggle from '../components/ThemeToggle.tsx'
 import type { AdminUser } from '../types'
 
 function AdminUsers() {
@@ -66,10 +69,11 @@ function AdminUsers() {
             <p className="h4">Users</p>
           </AppBar.Lead>
           <AppBar.Headline />
-          <AppBar.Trail className="flex-wrap justify-end">
+          <AppBar.Trail className="flex-wrap items-center justify-end gap-2">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
             </Link>
+            <ThemeToggle />
           </AppBar.Trail>
         </AppBar.Toolbar>
       </AppBar>
@@ -84,6 +88,7 @@ function AdminUsers() {
             <h2 className="h3">Couldn&rsquo;t load users</h2>
             <p className="text-error-500 text-sm">{loadError}</p>
             <button type="button" className="btn preset-tonal" onClick={loadUsers}>
+              <HugeiconsIcon icon={Refresh01Icon} size={16} strokeWidth={1.5} />
               Retry
             </button>
           </div>
@@ -117,6 +122,7 @@ function AdminUsers() {
                       onClick={() => handleDelete(target)}
                       disabled={isDeleting || isSelf}
                     >
+                      <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
                       {isDeleting ? 'Deleting…' : 'Delete'}
                     </button>
                   </div>

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../auth/AuthContext.tsx'
+import { ThemeProvider } from '../theme/ThemeContext.tsx'
 import AdminUsers from './AdminUsers.tsx'
 
 const { me, listAdminUsers } = vi.hoisted(() => ({
@@ -16,9 +17,11 @@ vi.mock('../api/client', () => ({
 function renderPage() {
   return render(
     <MemoryRouter>
-      <AuthProvider>
-        <AdminUsers />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AdminUsers />
+        </AuthProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   )
 }

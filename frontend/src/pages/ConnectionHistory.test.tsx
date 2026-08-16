@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
+import { ThemeProvider } from '../theme/ThemeContext.tsx'
 import ConnectionHistory from './ConnectionHistory.tsx'
 
 const { listConnectionLogs, getConnectionLogRecording } = vi.hoisted(() => ({
@@ -18,7 +19,9 @@ describe('ConnectionHistory', () => {
 
     render(
       <MemoryRouter>
-        <ConnectionHistory />
+        <ThemeProvider>
+          <ConnectionHistory />
+        </ThemeProvider>
       </MemoryRouter>,
     )
 
@@ -57,7 +60,9 @@ describe('ConnectionHistory', () => {
 
     render(
       <MemoryRouter>
-        <ConnectionHistory />
+        <ThemeProvider>
+          <ConnectionHistory />
+        </ThemeProvider>
       </MemoryRouter>,
     )
 
@@ -91,7 +96,9 @@ describe('ConnectionHistory', () => {
 
     render(
       <MemoryRouter>
-        <ConnectionHistory />
+        <ThemeProvider>
+          <ConnectionHistory />
+        </ThemeProvider>
       </MemoryRouter>,
     )
 

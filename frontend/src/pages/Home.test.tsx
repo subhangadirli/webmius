@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '../auth/AuthContext.tsx'
+import { ThemeProvider } from '../theme/ThemeContext.tsx'
 import Home from './Home.tsx'
 
 vi.mock('../api/client', () => ({
@@ -14,9 +15,11 @@ vi.mock('../api/client', () => ({
 function renderHome() {
   return render(
     <MemoryRouter>
-      <AuthProvider>
-        <Home />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Home />
+        </AuthProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   )
 }
