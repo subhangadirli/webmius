@@ -53,7 +53,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: pnpm install --frozen-lockfile
+        # frontend/.npmrc pins store-dir=/root/... for the Docker build (root
+        # user in the container); override it here since this job installs
+        # natively as the non-root `runner` user, who can't write to /root.
+        run: pnpm --store-dir ~/.local/share/pnpm/store install --frozen-lockfile
 
       - name: Typecheck
         working-directory: frontend
