@@ -26,6 +26,9 @@ function ConnectionList({ connections, onEdit, onDelete, deletingId = null }: Co
                   {connection.username}@{connection.host}:{connection.port}
                 </p>
               </div>
+              <span className="badge preset-tonal text-xs">
+                {connection.auth_type === 'key' ? 'SSH key' : 'Password'}
+              </span>
             </div>
             <div className="flex justify-end gap-2">
               <Link

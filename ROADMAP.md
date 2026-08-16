@@ -99,11 +99,15 @@ This roadmap turns the spec in [`DOCS.md`](./DOCS.md) into an ordered set of bui
 
 Not required for MVP completion; pulled from DOCS.md §3 ("Optional") and §12 ("Future Improvements"):
 
-- [ ] SSH key-based authentication
+- [x] SSH key-based authentication
 - [ ] Tagging / grouping servers
 - [ ] Connection history (logs)
 - [ ] Role-based access control
 - [ ] Full terminal emulation improvements, mobile-friendly UI
+
+**SSH key-based authentication — exit criteria verified:** `ssh_connections` gained `encrypted_private_key` and `encrypted_private_key_passphrase` columns (migration `f3f0e6e0e2a1`, chained after the initial migration; applied and verified against a live Postgres both as a fresh-DB upgrade and as an incremental upgrade on top of an already-migrated DB). `POST`/`PUT /api/connections` now accept `private_key` (PEM/OpenSSH) and an optional `private_key_passphrase` when `auth_type: "key"`, validated server-side via a new `security/ssh_keys.parse_private_key` helper (tries Ed25519/RSA/ECDSA/DSS) at *save* time — a bad key format or a missing/wrong passphrase is rejected with a 400 immediately rather than surfacing only when a user later tries to connect. `sockets/ssh_session.py`'s `on_ssh_connect` now branches on `auth_type` and authenticates Paramiko with `pkey=` for key connections (previously any non-password `auth_type` was hard-rejected with "only password-based connections are supported"). Frontend: `ConnectionForm` gained an Authentication selector that swaps the password field for a private-key textarea + optional passphrase field (same "leave blank to keep unchanged" semantics as password on edit), and `ConnectionList` now shows a Password/SSH key badge per connection.
+
+Verified for real, not just asserted: `pytest` (44/44, +11 new — 7 in `test_connections.py` covering create/update success, missing-key, garbage-key, and passphrase-required/wrong-passphrase 400s, 4 in new `test_ssh_keys.py` unit-testing the parser directly) re-run via `podman compose run --rm backend pytest -q`. End-to-end: registered a real user, created a key-auth connection via the live API pointing at a disposable `linuxserver/openssh-server` container configured for key-only auth (`PASSWORD_ACCESS=false`) with the matching public key installed, then drove the same Socket.IO-client-against-the-real-session-cookie approach used in M5/M8 — `ssh_connect` → `ssh_connected` → a real `echo` command executed and its output captured back over `ssh_output` → clean teardown. Frontend `pnpm run typecheck` / `pnpm run test` (7/7, +3 new covering the auth-type toggle and that a key submission sends `private_key` instead of `password`) / `pnpm run build` all re-verified via `podman compose run --rm frontend ...` against a freshly built image. `DOCS.md` §6/§7/§11/§12 updated to drop the "key auth is schema-only" limitation and move it out of Future Improvements.
 
 * * *
 

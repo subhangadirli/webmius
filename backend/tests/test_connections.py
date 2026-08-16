@@ -1,8 +1,22 @@
+import io
+
+import paramiko
 import pytest
 
 from app import create_app
 from app.extensions import db
 from config import TestingConfig
+
+
+def _generate_rsa_key(passphrase=None):
+    key = paramiko.RSAKey.generate(2048)
+    buf = io.StringIO()
+    key.write_private_key(buf, password=passphrase)
+    return buf.getvalue()
+
+
+TEST_PRIVATE_KEY = _generate_rsa_key()
+TEST_PRIVATE_KEY_ENCRYPTED = _generate_rsa_key(passphrase="key-pass")
 
 
 @pytest.fixture()
@@ -176,3 +190,75 @@ def test_mutating_request_with_wrong_csrf_token_is_rejected(client):
         headers={"X-CSRF-Token": "not-the-real-token"},
     )
     assert response.status_code == 403
+
+
+def test_create_connection_key_auth_success(client):
+    register_and_login(client)
+    response = create_connection(
+        client, auth_type="key", password="", private_key=TEST_PRIVATE_KEY
+    )
+    assert response.status_code == 201
+    body = response.get_json()
+    assert body["auth_type"] == "key"
+    assert "private_key" not in body
+    assert "encrypted_private_key" not in body
+
+
+def test_create_connection_key_auth_requires_private_key(client):
+    register_and_login(client)
+    response = create_connection(client, auth_type="key", password="")
+    assert response.status_code == 400
+
+
+def test_create_connection_key_auth_rejects_garbage_key(client):
+    register_and_login(client)
+    response = create_connection(
+        client, auth_type="key", password="", private_key="not a real key"
+    )
+    assert response.status_code == 400
+
+
+def test_create_connection_key_auth_with_passphrase_success(client):
+    register_and_login(client)
+    response = create_connection(
+        client,
+        auth_type="key",
+        password="",
+        private_key=TEST_PRIVATE_KEY_ENCRYPTED,
+        private_key_passphrase="key-pass",
+    )
+    assert response.status_code == 201
+
+
+def test_create_connection_key_auth_missing_passphrase_fails(client):
+    register_and_login(client)
+    response = create_connection(
+        client, auth_type="key", password="", private_key=TEST_PRIVATE_KEY_ENCRYPTED
+    )
+    assert response.status_code == 400
+    assert "passphrase" in response.get_json()["error"]
+
+
+def test_update_connection_to_key_auth(client):
+    register_and_login(client)
+    created = create_connection(client).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"auth_type": "key", "private_key": TEST_PRIVATE_KEY},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 200
+    assert response.get_json()["auth_type"] == "key"
+
+
+def test_update_connection_rejects_invalid_key(client):
+    register_and_login(client)
+    created = create_connection(client, auth_type="key", password="", private_key=TEST_PRIVATE_KEY).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"private_key": "not a real key"},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 400

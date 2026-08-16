@@ -8,6 +8,7 @@ from ..extensions import socketio
 from ..models import SSHConnection
 from ..security.auth import get_current_user
 from ..security.crypto import decrypt_value
+from ..security.ssh_keys import parse_private_key
 
 NAMESPACE = "/ws/ssh-session"
 
@@ -97,8 +98,28 @@ class SSHSessionNamespace(Namespace):
             emit("ssh_error", {"message": "connection not found"})
             return
 
-        if connection.auth_type != "password" or not connection.encrypted_password:
-            emit("ssh_error", {"message": "only password-based connections are supported"})
+        if connection.auth_type == "password":
+            if not connection.encrypted_password:
+                emit("ssh_error", {"message": "no password stored for this connection"})
+                return
+            auth_kwargs = {"password": decrypt_value(connection.encrypted_password)}
+        elif connection.auth_type == "key":
+            if not connection.encrypted_private_key:
+                emit("ssh_error", {"message": "no private key stored for this connection"})
+                return
+            try:
+                passphrase = (
+                    decrypt_value(connection.encrypted_private_key_passphrase)
+                    if connection.encrypted_private_key_passphrase
+                    else None
+                )
+                pkey = parse_private_key(decrypt_value(connection.encrypted_private_key), passphrase)
+            except (ValueError, paramiko.PasswordRequiredException) as exc:
+                emit("ssh_error", {"message": f"stored private key is invalid: {exc}"})
+                return
+            auth_kwargs = {"pkey": pkey}
+        else:
+            emit("ssh_error", {"message": "unsupported auth_type"})
             return
 
         client = paramiko.SSHClient()
@@ -108,10 +129,10 @@ class SSHSessionNamespace(Namespace):
                 hostname=connection.host,
                 port=connection.port,
                 username=connection.username,
-                password=decrypt_value(connection.encrypted_password),
                 timeout=10,
                 allow_agent=False,
                 look_for_keys=False,
+                **auth_kwargs,
             )
         except paramiko.AuthenticationException:
             emit("ssh_error", {"message": "SSH authentication failed"})

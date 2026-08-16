@@ -33,6 +33,8 @@ export interface ConnectionPayload {
   port: number
   username: string
   password?: string
+  private_key?: string
+  private_key_passphrase?: string
   auth_type?: AuthType
 }
 

@@ -1,9 +1,11 @@
+import paramiko
 from flask import Blueprint, g, jsonify, request
 
 from ..extensions import db
 from ..models import SSHConnection
 from ..security.auth import login_required
 from ..security.crypto import encrypt_value
+from ..security.ssh_keys import parse_private_key
 
 connections_bp = Blueprint("connections", __name__, url_prefix="/api")
 
@@ -22,6 +24,17 @@ def _connection_to_dict(connection):
 
 def _get_owned_connection(connection_id):
     return SSHConnection.query.filter_by(id=connection_id, user_id=g.current_user.id).first()
+
+
+def _validate_private_key(private_key, passphrase):
+    """Returns an error message if the key is unusable, else None."""
+    try:
+        parse_private_key(private_key, passphrase or None)
+    except paramiko.PasswordRequiredException:
+        return "private_key_passphrase is required to decrypt this key"
+    except ValueError as exc:
+        return str(exc)
+    return None
 
 
 @connections_bp.get("/connections")
@@ -43,6 +56,8 @@ def create_connection():
     host = (data.get("host") or "").strip()
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
+    private_key = data.get("private_key") or ""
+    private_key_passphrase = data.get("private_key_passphrase") or ""
     port = data.get("port", 22)
     auth_type = data.get("auth_type") or "password"
 
@@ -54,6 +69,13 @@ def create_connection():
 
     if auth_type == "password" and not password:
         return jsonify(error="password is required for auth_type 'password'"), 400
+
+    if auth_type == "key":
+        if not private_key:
+            return jsonify(error="private_key is required for auth_type 'key'"), 400
+        key_error = _validate_private_key(private_key, private_key_passphrase)
+        if key_error:
+            return jsonify(error=key_error), 400
 
     try:
         port = int(port)
@@ -68,6 +90,10 @@ def create_connection():
         username=username,
         auth_type=auth_type,
         encrypted_password=encrypt_value(password) if auth_type == "password" else None,
+        encrypted_private_key=encrypt_value(private_key) if auth_type == "key" else None,
+        encrypted_private_key_passphrase=(
+            encrypt_value(private_key_passphrase) if auth_type == "key" and private_key_passphrase else None
+        ),
     )
     db.session.add(connection)
     db.session.commit()
@@ -116,6 +142,17 @@ def update_connection(connection_id):
 
     if "password" in data and data.get("password"):
         connection.encrypted_password = encrypt_value(data["password"])
+
+    if "private_key" in data and data.get("private_key"):
+        private_key = data["private_key"]
+        private_key_passphrase = data.get("private_key_passphrase") or ""
+        key_error = _validate_private_key(private_key, private_key_passphrase)
+        if key_error:
+            return jsonify(error=key_error), 400
+        connection.encrypted_private_key = encrypt_value(private_key)
+        connection.encrypted_private_key_passphrase = (
+            encrypt_value(private_key_passphrase) if private_key_passphrase else None
+        )
 
     db.session.commit()
 

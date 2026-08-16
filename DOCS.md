@@ -89,7 +89,9 @@ The system follows a client-server architecture:
 * port
 * username
 * auth_type (password/key)
-* encrypted\_password (optional)
+* encrypted\_password (optional, used when auth_type is "password")
+* encrypted\_private\_key (optional, used when auth_type is "key")
+* encrypted\_private\_key\_passphrase (optional, only if the stored key is itself passphrase-protected)
 
 * * *
 
@@ -108,6 +110,8 @@ The system follows a client-server architecture:
 * POST /api/connections
 * PUT /api/connections/{id}
 * DELETE /api/connections/{id}
+
+`auth_type` is `"password"` or `"key"`. Password connections take a `password` field; key connections take a `private_key` (PEM/OpenSSH format) and an optional `private_key_passphrase` if the key itself is encrypted. The key is parsed and validated server-side at save time (unrecognized formats or a missing/wrong passphrase are rejected with a 400), not just at connect time. As with `password`, omitting `private_key`/`private_key_passphrase` on an update leaves the stored value unchanged.
 
 All `/api/*` mutating requests (state-changing methods) additionally require an `X-CSRF-Token` header echoing the `csrf_token` cookie (double-submit pattern) — see §8.
 
@@ -153,7 +157,6 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 ### 11. Limitations (MVP)
 
 * No advanced terminal features (multiplexing, session recording)
-* SSH key-based authentication is modeled in the schema (`auth_type`) but not implemented end-to-end yet — only password auth works; `auth_type: "key"` connections are rejected with a clear error (tracked as future work, §12)
 * Limited security compared to enterprise tools (no secrets vaulting, no SSO)
 * No multi-user collaboration
 
@@ -161,13 +164,12 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 
 ### 12\. Future Improvements
 
-* SSH key-based authentication (end-to-end)
 * Tagging / grouping servers
 * Connection history (logs)
 * Role-based access control
 * Further terminal emulation improvements (multiplexing, session recording), mobile-friendly UI
 
-Terminal emulation via xterm.js shipped as part of the MVP (§5) rather than remaining a stretch goal.
+Terminal emulation via xterm.js and SSH key-based authentication both shipped as part of the MVP (§5, §7) rather than remaining stretch goals.
 
 * * *
 

@@ -1,15 +1,27 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import type { ConnectionPayload, SSHConnection } from '../types'
+import type { AuthType, ConnectionPayload, SSHConnection } from '../types'
 
 interface FormState {
   name: string
   host: string
   port: string
   username: string
+  authType: AuthType
   password: string
+  privateKey: string
+  privateKeyPassphrase: string
 }
 
-const emptyForm: FormState = { name: '', host: '', port: '22', username: '', password: '' }
+const emptyForm: FormState = {
+  name: '',
+  host: '',
+  port: '22',
+  username: '',
+  authType: 'password',
+  password: '',
+  privateKey: '',
+  privateKeyPassphrase: '',
+}
 
 function toFormState(connection?: SSHConnection): FormState {
   if (!connection) return emptyForm
@@ -18,7 +30,10 @@ function toFormState(connection?: SSHConnection): FormState {
     host: connection.host,
     port: String(connection.port),
     username: connection.username,
+    authType: connection.auth_type,
     password: '',
+    privateKey: '',
+    privateKeyPassphrase: '',
   }
 }
 
@@ -34,7 +49,9 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = event.target
     setForm({ ...form, [name]: name === 'port' ? value.replace(/\D/g, '') : value })
   }
@@ -49,10 +66,13 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
         host: form.host,
         username: form.username,
         port: Number(form.port) || 22,
-        password: form.password,
+        auth_type: form.authType,
       }
-      if (isEditing && !payload.password) {
-        delete payload.password
+      if (form.authType === 'password') {
+        if (form.password) payload.password = form.password
+      } else {
+        if (form.privateKey) payload.private_key = form.privateKey
+        if (form.privateKeyPassphrase) payload.private_key_passphrase = form.privateKeyPassphrase
       }
       await onSubmit(payload)
     } catch (err) {
@@ -115,18 +135,59 @@ function ConnectionForm({ initialValues, onSubmit, onCancel, isEditing = false }
           />
         </label>
         <label className="label">
-          <span className="label-text">
-            Password{isEditing && <span className="opacity-60"> (leave blank to keep unchanged)</span>}
-          </span>
-          <input
-            className="input"
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            required={!isEditing}
-          />
+          <span className="label-text">Authentication</span>
+          <select className="select" name="authType" value={form.authType} onChange={handleChange}>
+            <option value="password">Password</option>
+            <option value="key">SSH key</option>
+          </select>
         </label>
+
+        {form.authType === 'password' && (
+          <label className="label">
+            <span className="label-text">
+              Password{isEditing && <span className="opacity-60"> (leave blank to keep unchanged)</span>}
+            </span>
+            <input
+              className="input"
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              required={!isEditing}
+            />
+          </label>
+        )}
+
+        {form.authType === 'key' && (
+          <>
+            <label className="label sm:col-span-2">
+              <span className="label-text">
+                Private key{isEditing && <span className="opacity-60"> (leave blank to keep unchanged)</span>}
+              </span>
+              <textarea
+                className="textarea font-mono text-xs"
+                name="privateKey"
+                rows={6}
+                placeholder={'-----BEGIN OPENSSH PRIVATE KEY-----\n...\n-----END OPENSSH PRIVATE KEY-----'}
+                value={form.privateKey}
+                onChange={handleChange}
+                required={!isEditing}
+              />
+            </label>
+            <label className="label sm:col-span-2">
+              <span className="label-text">
+                Key passphrase <span className="opacity-60">(only if the key is encrypted)</span>
+              </span>
+              <input
+                className="input"
+                type="password"
+                name="privateKeyPassphrase"
+                value={form.privateKeyPassphrase}
+                onChange={handleChange}
+              />
+            </label>
+          </>
+        )}
       </fieldset>
 
       <div className="flex justify-end gap-2">
