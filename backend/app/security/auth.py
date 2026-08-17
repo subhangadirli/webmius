@@ -1,15 +1,28 @@
+from datetime import datetime, timezone
 from functools import wraps
 
 from flask import g, jsonify, session
 
 from ..extensions import db
-from ..models import User
+from ..models import User, get_app_settings
 
 
 def get_current_user():
     user_id = session.get("user_id")
     if user_id is None:
         return None
+
+    timeout = get_app_settings().session_timeout_minutes
+    if timeout:
+        now = datetime.now(timezone.utc)
+        last_seen = session.get("last_seen")
+        if last_seen is not None:
+            elapsed_minutes = (now - datetime.fromisoformat(last_seen)).total_seconds() / 60
+            if elapsed_minutes > timeout:
+                session.clear()
+                return None
+        session["last_seen"] = now.isoformat()
+
     return db.session.get(User, user_id)
 
 

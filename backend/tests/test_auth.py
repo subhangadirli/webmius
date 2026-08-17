@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 
 from app import create_app
@@ -100,6 +102,150 @@ def test_login_missing_fields(client):
 def test_me_without_session_is_unauthorized(client):
     response = client.get("/api/me")
     assert response.status_code == 401
+
+
+def test_update_me_changes_username_and_email(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.patch(
+        "/api/me",
+        json={"username": "alice2", "email": "alice2@example.com"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["username"] == "alice2"
+    assert body["email"] == "alice2@example.com"
+
+
+def test_update_me_rejects_duplicate_username(client):
+    register(client, username="alice", email="alice@example.com")
+    register(client, username="bob", email="bob@example.com")
+    login(client, username="bob", password="correcthorse")
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.patch(
+        "/api/me", json={"username": "alice"}, headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 409
+
+
+def test_update_me_requires_auth(client):
+    response = client.patch("/api/me", json={"username": "alice2"})
+    assert response.status_code == 401
+
+
+def test_change_password_success(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.post(
+        "/api/me/password",
+        json={"current_password": "correcthorse", "new_password": "newpassword123"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 204
+
+    client.post("/api/logout", headers={"X-CSRF-Token": csrf_token})
+    assert login(client, password="correcthorse").status_code == 401
+    assert login(client, password="newpassword123").status_code == 200
+
+
+def test_change_password_wrong_current_password(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.post(
+        "/api/me/password",
+        json={"current_password": "wrong", "new_password": "newpassword123"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 401
+
+
+def test_delete_me_success(client):
+    register(client, username="alice", email="alice@example.com")
+    register(client, username="bob", email="bob@example.com")
+    login(client, username="bob", password="correcthorse")
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.delete(
+        "/api/me", json={"password": "correcthorse"}, headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 204
+    assert client.get("/api/me").status_code == 401
+
+
+def test_delete_me_wrong_password(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.delete(
+        "/api/me", json={"password": "wrong"}, headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 401
+
+
+def test_delete_me_blocks_last_admin(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.delete(
+        "/api/me", json={"password": "correcthorse"}, headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 400
+
+
+def test_register_blocked_when_registration_disabled(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+    client.patch(
+        "/api/admin/settings",
+        json={"registration_enabled": False},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    response = register(client, username="bob", email="bob@example.com")
+    assert response.status_code == 403
+
+
+def test_session_expires_after_idle_timeout(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+    client.patch(
+        "/api/admin/settings",
+        json={"session_timeout_minutes": 5},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    with client.session_transaction() as sess:
+        sess["last_seen"] = (datetime.now(timezone.utc) - timedelta(minutes=6)).isoformat()
+
+    assert client.get("/api/me").status_code == 401
+
+
+def test_session_stays_alive_within_idle_timeout(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+    client.patch(
+        "/api/admin/settings",
+        json={"session_timeout_minutes": 5},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+
+    with client.session_transaction() as sess:
+        sess["last_seen"] = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+
+    assert client.get("/api/me").status_code == 200
 
 
 def test_logout_clears_session(client):

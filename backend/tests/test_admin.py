@@ -95,6 +95,69 @@ def test_admin_user_list_includes_connection_count(client):
     assert alice["connection_count"] == 1
 
 
+def test_get_settings_requires_auth(client):
+    assert client.get("/api/admin/settings").status_code == 401
+
+
+def test_non_admin_forbidden_from_settings(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+    register_and_login(client, username="bob", email="bob@example.com")
+
+    assert client.get("/api/admin/settings").status_code == 403
+    assert (
+        client.patch(
+            "/api/admin/settings", json={"registration_enabled": False}, headers=csrf_headers(client)
+        ).status_code
+        == 403
+    )
+
+
+def test_admin_can_read_default_settings(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+
+    response = client.get("/api/admin/settings")
+    assert response.status_code == 200
+    assert response.get_json() == {"registration_enabled": True, "session_timeout_minutes": None}
+
+
+def test_admin_can_update_settings(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+
+    response = client.patch(
+        "/api/admin/settings",
+        json={"registration_enabled": False, "session_timeout_minutes": 30},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {"registration_enabled": False, "session_timeout_minutes": 30}
+
+    # persisted across requests, not just echoed back
+    follow_up = client.get("/api/admin/settings")
+    assert follow_up.get_json() == {"registration_enabled": False, "session_timeout_minutes": 30}
+
+
+def test_update_settings_rejects_invalid_timeout(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+
+    response = client.patch(
+        "/api/admin/settings", json={"session_timeout_minutes": -5}, headers=csrf_headers(client)
+    )
+    assert response.status_code == 400
+
+
+def test_update_settings_can_clear_timeout(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+    client.patch(
+        "/api/admin/settings", json={"session_timeout_minutes": 30}, headers=csrf_headers(client)
+    )
+
+    response = client.patch(
+        "/api/admin/settings", json={"session_timeout_minutes": None}, headers=csrf_headers(client)
+    )
+    assert response.status_code == 200
+    assert response.get_json()["session_timeout_minutes"] is None
+
+
 def test_deleting_user_cascades_their_connections(client):
     register_and_login(client, username="alice", email="alice@example.com")
     bob_login = register_and_login(client, username="bob", email="bob@example.com")

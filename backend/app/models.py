@@ -27,6 +27,30 @@ class User(db.Model):
         return f"<User {self.username}>"
 
 
+class AppSettings(db.Model):
+    __tablename__ = "app_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    registration_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    # None means no idle timeout, matching today's default session behavior.
+    session_timeout_minutes = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f"<AppSettings registration_enabled={self.registration_enabled}>"
+
+
+def get_app_settings():
+    # The migration seeds row id=1, but tests build the schema via
+    # db.create_all() (no migrations), so lazily create it here too rather
+    # than making every caller handle a missing row.
+    settings = db.session.get(AppSettings, 1)
+    if settings is None:
+        settings = AppSettings(id=1, registration_enabled=True, session_timeout_minutes=None)
+        db.session.add(settings)
+        db.session.commit()
+    return settings
+
+
 class SSHConnection(db.Model):
     __tablename__ = "ssh_connections"
     __table_args__ = (

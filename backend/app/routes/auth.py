@@ -1,7 +1,9 @@
-from flask import Blueprint, g, jsonify, request, session
+from datetime import datetime, timedelta, timezone
+
+from flask import Blueprint, current_app, g, jsonify, request, session
 
 from ..extensions import db, limiter
-from ..models import User
+from ..models import User, get_app_settings
 from ..security.auth import login_required
 from ..security.passwords import hash_password, verify_password
 
@@ -22,6 +24,9 @@ def register():
 
     if not username or not email or not password:
         return jsonify(error="username, email, and password are required"), 400
+
+    if not get_app_settings().registration_enabled:
+        return jsonify(error="registration is currently closed"), 403
 
     if User.query.filter_by(username=username).first():
         return jsonify(error="username already taken"), 409
@@ -56,6 +61,12 @@ def login():
 
     session["user_id"] = user.id
 
+    timeout = get_app_settings().session_timeout_minutes
+    if timeout:
+        session.permanent = True
+        current_app.permanent_session_lifetime = timedelta(minutes=timeout)
+        session["last_seen"] = datetime.now(timezone.utc).isoformat()
+
     return jsonify(_user_to_dict(user)), 200
 
 
@@ -69,3 +80,66 @@ def logout():
 @login_required
 def me():
     return jsonify(_user_to_dict(g.current_user)), 200
+
+
+@auth_bp.patch("/me")
+@login_required
+def update_me():
+    data = request.get_json(silent=True) or {}
+    user = g.current_user
+
+    if "username" in data:
+        username = (data.get("username") or "").strip()
+        if not username:
+            return jsonify(error="username cannot be empty"), 400
+        if username != user.username and User.query.filter_by(username=username).first():
+            return jsonify(error="username already taken"), 409
+        user.username = username
+
+    if "email" in data:
+        email = (data.get("email") or "").strip()
+        if not email:
+            return jsonify(error="email cannot be empty"), 400
+        if email != user.email and User.query.filter_by(email=email).first():
+            return jsonify(error="email already registered"), 409
+        user.email = email
+
+    db.session.commit()
+    return jsonify(_user_to_dict(user)), 200
+
+
+@auth_bp.post("/me/password")
+@login_required
+def change_password():
+    data = request.get_json(silent=True) or {}
+    current_password = data.get("current_password") or ""
+    new_password = data.get("new_password") or ""
+
+    if not current_password or not new_password:
+        return jsonify(error="current_password and new_password are required"), 400
+
+    if not verify_password(current_password, g.current_user.password_hash):
+        return jsonify(error="current password is incorrect"), 401
+
+    g.current_user.password_hash = hash_password(new_password)
+    db.session.commit()
+    return "", 204
+
+
+@auth_bp.delete("/me")
+@login_required
+def delete_me():
+    data = request.get_json(silent=True) or {}
+    password = data.get("password") or ""
+    user = g.current_user
+
+    if not verify_password(password, user.password_hash):
+        return jsonify(error="password is incorrect"), 401
+
+    if user.role == "admin" and User.query.filter_by(role="admin").count() <= 1:
+        return jsonify(error="cannot delete the last remaining admin"), 400
+
+    db.session.delete(user)
+    db.session.commit()
+    session.clear()
+    return "", 204
