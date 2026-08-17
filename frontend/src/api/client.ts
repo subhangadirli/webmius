@@ -1,10 +1,13 @@
 import type {
   AdminUser,
+  AppSettings,
+  ChangePasswordPayload,
   ConnectionLogEntry,
   ConnectionPayload,
   LoginPayload,
   RegisterPayload,
   SSHConnection,
+  UpdateProfilePayload,
   User,
 } from '../types'
 
@@ -60,6 +63,12 @@ export const api = {
     request<User>('/api/login', { method: 'POST', body: JSON.stringify(data) }),
   logout: () => request<null>('/api/logout', { method: 'POST' }),
   me: () => request<User>('/api/me'),
+  updateMe: (data: UpdateProfilePayload) =>
+    request<User>('/api/me', { method: 'PATCH', body: JSON.stringify(data) }),
+  changePassword: (data: ChangePasswordPayload) =>
+    request<null>('/api/me/password', { method: 'POST', body: JSON.stringify(data) }),
+  deleteMe: (password: string) =>
+    request<null>('/api/me', { method: 'DELETE', body: JSON.stringify({ password }) }),
   listConnections: () => request<SSHConnection[]>('/api/connections'),
   createConnection: (data: ConnectionPayload) =>
     request<SSHConnection>('/api/connections', { method: 'POST', body: JSON.stringify(data) }),
@@ -71,4 +80,7 @@ export const api = {
     request<{ recording: string | null }>(`/api/connection-logs/${id}/recording`),
   listAdminUsers: () => request<AdminUser[]>('/api/admin/users'),
   deleteAdminUser: (id: number) => request<null>(`/api/admin/users/${id}`, { method: 'DELETE' }),
+  getAppSettings: () => request<AppSettings>('/api/admin/settings'),
+  updateAppSettings: (data: Partial<AppSettings>) =>
+    request<AppSettings>('/api/admin/settings', { method: 'PATCH', body: JSON.stringify(data) }),
 }

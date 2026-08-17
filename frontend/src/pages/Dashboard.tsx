@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from '@hugeicons/react'
-import { PlusSignIcon, Refresh01Icon } from '@hugeicons/core-free-icons'
+import { PlusSignIcon, Refresh01Icon, Settings01Icon } from '@hugeicons/core-free-icons'
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -99,6 +99,10 @@ function Dashboard() {
                   Users
                 </Link>
               )}
+              <Link to="/settings" className="btn btn-sm preset-tonal">
+                <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} />
+                Settings
+              </Link>
               <ThemeToggle />
             </div>
             <div className="border-surface-500/30 flex items-center gap-2 border-l pl-3">

@@ -75,3 +75,18 @@ export interface AdminUser {
   connection_count: number
   created_at: string | null
 }
+
+export interface UpdateProfilePayload {
+  username?: string
+  email?: string
+}
+
+export interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+}
+
+export interface AppSettings {
+  registration_enabled: boolean
+  session_timeout_minutes: number | null
+}

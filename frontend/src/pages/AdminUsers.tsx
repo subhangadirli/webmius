@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Delete02Icon, Refresh01Icon } from '@hugeicons/core-free-icons'
+import { Delete02Icon, Refresh01Icon, Settings01Icon } from '@hugeicons/core-free-icons'
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -72,6 +72,10 @@ function AdminUsers() {
           <AppBar.Trail className="flex-wrap items-center justify-end gap-2">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
+            </Link>
+            <Link to="/settings" className="btn btn-sm preset-tonal">
+              <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} />
+              Settings
             </Link>
             <ThemeToggle />
           </AppBar.Trail>

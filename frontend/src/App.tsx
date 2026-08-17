@@ -9,6 +9,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard.tsx'))
 const TerminalWorkspace = lazy(() => import('./pages/TerminalWorkspace.tsx'))
 const ConnectionHistory = lazy(() => import('./pages/ConnectionHistory.tsx'))
 const AdminUsers = lazy(() => import('./pages/AdminUsers.tsx'))
+const Settings = lazy(() => import('./pages/Settings.tsx'))
 
 // Route components are code-split (see the lazy() calls above) so that, eg.,
 // loading /dashboard doesn't also pull in xterm.js and socket.io-client for
@@ -57,6 +58,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

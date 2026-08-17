@@ -13,9 +13,10 @@ export interface TerminalHandle {
 interface TerminalProps {
   onData: (data: string) => void
   onResize: (cols: number, rows: number) => void
+  fontSize?: number
 }
 
-const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize }, ref) => {
+const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize, fontSize = 14 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
 
@@ -35,7 +36,7 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize }
 
     const xterm = new XTerm({
       cursorBlink: true,
-      fontSize: 14,
+      fontSize,
       fontFamily: 'Menlo, Consolas, "Liberation Mono", monospace',
       theme: { background: '#0a0a0a' },
       rightClickSelectsWord: true,

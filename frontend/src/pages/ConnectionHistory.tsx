@@ -1,7 +1,7 @@
 import { AppBar } from '@skeletonlabs/skeleton-react'
 import { useEffect, useState } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Refresh01Icon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
+import { Refresh01Icon, Settings01Icon, ViewIcon, ViewOffIcon } from '@hugeicons/core-free-icons'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import ThemeToggle from '../components/ThemeToggle.tsx'
@@ -139,6 +139,10 @@ function ConnectionHistory() {
           <AppBar.Trail className="flex-wrap items-center justify-end gap-2">
             <Link to="/dashboard" className="btn btn-sm preset-tonal">
               Back to dashboard
+            </Link>
+            <Link to="/settings" className="btn btn-sm preset-tonal">
+              <HugeiconsIcon icon={Settings01Icon} size={16} strokeWidth={1.5} />
+              Settings
             </Link>
             <ThemeToggle />
           </AppBar.Trail>
