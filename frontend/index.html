@@ -9,6 +9,11 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕸️</text></svg>"
     />
+    <!-- Matches the VITE_API_URL default in src/api/client.ts / .env.example.
+         Every authenticated page fires /api/me and /api/connections on mount,
+         so warming the TLS/TCP handshake to the backend origin before the API
+         client's JS even runs shaves the connection setup off that request. -->
+    <link rel="preconnect" href="http://localhost:5000" />
     <script>
       // Set the color-scheme before first paint so the page never flashes the
       // wrong mode while React boots. Kept in sync with src/theme/ThemeContext.tsx.
