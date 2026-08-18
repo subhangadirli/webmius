@@ -39,6 +39,21 @@ class AppSettings(db.Model):
         return f"<AppSettings registration_enabled={self.registration_enabled}>"
 
 
+class PasswordResetToken(db.Model):
+    __tablename__ = "password_reset_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # Only the hash is stored - the raw token exists solely in the emailed
+    # link, so a DB leak alone can't be used to reset anyone's password.
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f"<PasswordResetToken user_id={self.user_id}>"
+
+
 def get_app_settings():
     # The migration seeds row id=1, but tests build the schema via
     # db.create_all() (no migrations), so lazily create it here too rather

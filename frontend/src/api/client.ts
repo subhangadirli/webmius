@@ -69,6 +69,13 @@ export const api = {
     request<null>('/api/me/password', { method: 'POST', body: JSON.stringify(data) }),
   deleteMe: (password: string) =>
     request<null>('/api/me', { method: 'DELETE', body: JSON.stringify({ password }) }),
+  requestPasswordReset: (email: string) =>
+    request<{ message: string }>('/api/password-reset/request', { method: 'POST', body: JSON.stringify({ email }) }),
+  confirmPasswordReset: (token: string, newPassword: string) =>
+    request<null>('/api/password-reset/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    }),
   listConnections: () => request<SSHConnection[]>('/api/connections'),
   createConnection: (data: ConnectionPayload) =>
     request<SSHConnection>('/api/connections', { method: 'POST', body: JSON.stringify(data) }),

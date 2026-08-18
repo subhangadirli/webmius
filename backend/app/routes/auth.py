@@ -1,17 +1,30 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, current_app, g, jsonify, request, session
 
+from ..email import send_password_reset_email
 from ..extensions import db, limiter
-from ..models import User, get_app_settings
+from ..models import PasswordResetToken, User, get_app_settings
 from ..security.auth import login_required
 from ..security.passwords import hash_password, verify_password
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
+RESET_TOKEN_TTL_MINUTES = 60
+
 
 def _user_to_dict(user):
     return {"id": user.id, "username": user.username, "email": user.email, "role": user.role}
+
+
+def _hash_token(token):
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _naive_utc_now():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 @auth_bp.post("/register")
@@ -142,4 +155,59 @@ def delete_me():
     db.session.delete(user)
     db.session.commit()
     session.clear()
+    return "", 204
+
+
+@auth_bp.post("/password-reset/request")
+@limiter.limit("5 per minute")
+def request_password_reset():
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip()
+
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if user is not None:
+            PasswordResetToken.query.filter_by(user_id=user.id).delete()
+
+            token = secrets.token_urlsafe(32)
+            reset = PasswordResetToken(
+                user_id=user.id,
+                token_hash=_hash_token(token),
+                expires_at=_naive_utc_now() + timedelta(minutes=RESET_TOKEN_TTL_MINUTES),
+            )
+            db.session.add(reset)
+            db.session.commit()
+
+            reset_url = f"{current_app.config['FRONTEND_URL']}/reset-password?token={token}"
+            send_password_reset_email(user.email, reset_url)
+
+    # Always the same response, whether or not the email matched an account -
+    # returning a different message for "no such user" would let an attacker
+    # enumerate which addresses have accounts here.
+    return jsonify(message="If an account exists for that email, a reset link has been sent."), 200
+
+
+@auth_bp.post("/password-reset/confirm")
+@limiter.limit("10 per minute")
+def confirm_password_reset():
+    data = request.get_json(silent=True) or {}
+    token = data.get("token") or ""
+    new_password = data.get("new_password") or ""
+
+    if not token or not new_password:
+        return jsonify(error="token and new_password are required"), 400
+
+    reset = PasswordResetToken.query.filter_by(token_hash=_hash_token(token)).first()
+    if reset is None or reset.expires_at < _naive_utc_now():
+        return jsonify(error="invalid or expired reset link"), 400
+
+    user = db.session.get(User, reset.user_id)
+    user.password_hash = hash_password(new_password)
+
+    # The token just used, and any other outstanding ones for this user, are
+    # no longer valid - deleting (rather than flagging) means a consumed or
+    # superseded token can never be replayed.
+    PasswordResetToken.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
+
     return "", 204

@@ -96,6 +96,12 @@ function Login() {
               </div>
             </label>
 
+            <p className="text-right text-sm">
+              <Link className="anchor" to="/forgot-password">
+                Forgot password?
+              </Link>
+            </p>
+
             <button className="btn preset-filled-primary-700-300 w-full" type="submit" disabled={submitting}>
               {submitting ? 'Logging in…' : 'Log in'}
             </button>

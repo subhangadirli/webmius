@@ -5,6 +5,8 @@ import ProtectedRoute from './auth/ProtectedRoute.tsx'
 const Home = lazy(() => import('./pages/Home.tsx'))
 const Login = lazy(() => import('./pages/Login.tsx'))
 const Register = lazy(() => import('./pages/Register.tsx'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword.tsx'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx'))
 const Dashboard = lazy(() => import('./pages/Dashboard.tsx'))
 const TerminalWorkspace = lazy(() => import('./pages/TerminalWorkspace.tsx'))
 const ConnectionHistory = lazy(() => import('./pages/ConnectionHistory.tsx'))
@@ -29,6 +31,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/dashboard"
           element={

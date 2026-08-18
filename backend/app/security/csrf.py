@@ -7,7 +7,12 @@ CSRF_HEADER_NAME = "X-CSRF-Token"
 
 # No session exists yet when these run, so there is nothing for a forged
 # cross-site request to ride on.
-_EXEMPT_ENDPOINTS = {"auth.register", "auth.login"}
+_EXEMPT_ENDPOINTS = {
+    "auth.register",
+    "auth.login",
+    "auth.request_password_reset",
+    "auth.confirm_password_reset",
+}
 _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 

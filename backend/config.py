@@ -29,6 +29,20 @@ class Config:
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URI = "memory://"
 
+    # Email is optional: SMTP_HOST unset means password-reset links are
+    # logged instead of sent, so the feature works out of the box on a
+    # fresh self-hosted install with no mail server configured.
+    SMTP_HOST = os.environ.get("SMTP_HOST")
+    SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+    SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+    SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+    SMTP_FROM_ADDRESS = os.environ.get("SMTP_FROM_ADDRESS", "webmius@localhost")
+    SMTP_USE_TLS = _bool_env("SMTP_USE_TLS", True)
+
+    # Origin the backend puts into emailed links (password reset, etc.)
+    # since it has no other way to know the frontend's real address.
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
