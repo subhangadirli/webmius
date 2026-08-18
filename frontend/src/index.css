@@ -36,3 +36,36 @@
 :root[data-mode='dark'] a.anchor {
   color: var(--color-primary-400);
 }
+
+/*
+ * Skeleton draws input/select/textarea borders as an inset box-shadow ring
+ * rather than a real `border`. Box-shadow is rasterized, not stroked, so
+ * its rendered weight can vary with a browser's zoom/devicePixelRatio
+ * handling — reported as borders being nearly invisible on Zen while
+ * identical-width borders render fine on Firefox/Brave. A real `border`
+ * is stroked identically regardless of that, so it sidesteps the whole
+ * category of inconsistency instead of chasing ring-width tweaks per
+ * browser. Preflight's border-box sizing means this doesn't change these
+ * elements' rendered dimensions. The focus/active ring color swap
+ * (surface -> primary) is reimplemented here as a border-color swap so
+ * focus feedback still works with a real border in place of a ring.
+ */
+.input,
+.select,
+.textarea {
+  box-shadow: none;
+  border-style: solid;
+  border-width: 1.5px;
+  border-color: var(--color-surface-300-700);
+}
+.input:focus,
+.input:focus-within,
+.input:active,
+.select:focus,
+.select:focus-within,
+.select:active,
+.textarea:focus,
+.textarea:focus-within,
+.textarea:active {
+  border-color: var(--color-primary-500);
+}
