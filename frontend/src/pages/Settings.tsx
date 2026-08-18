@@ -5,6 +5,7 @@ import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext.tsx'
 import ThemeToggle from '../components/ThemeToggle.tsx'
 import { MAX_FONT_SIZE, MIN_FONT_SIZE, usePreferences } from '../theme/PreferencesContext.tsx'
+import { TERMINAL_CURSOR_STYLES, TERMINAL_FONT_FAMILIES, TERMINAL_THEMES, getTerminalTheme } from '../theme/terminalThemes.ts'
 import type { AppSettings } from '../types'
 
 function AccountSection() {
@@ -154,8 +155,58 @@ function PasswordSection() {
   )
 }
 
+function TerminalPreview() {
+  const { terminalFontSize, terminalFontFamily, terminalThemeId, terminalCursorStyle } = usePreferences()
+  const theme = getTerminalTheme(terminalThemeId)
+
+  const cursorClassName =
+    terminalCursorStyle === 'underline'
+      ? 'inline-block w-2 border-b-2'
+      : terminalCursorStyle === 'bar'
+        ? 'inline-block w-px border-l-2'
+        : 'inline-block w-2'
+
+  return (
+    <pre
+      className="overflow-x-auto rounded-md p-3 leading-relaxed"
+      style={{
+        backgroundColor: theme.background,
+        color: theme.foreground,
+        fontFamily: terminalFontFamily,
+        fontSize: terminalFontSize,
+      }}
+    >
+      <span style={{ color: theme.green }}>user@webmius</span>
+      <span style={{ color: theme.foreground }}>:</span>
+      <span style={{ color: theme.blue }}>~/projects</span>
+      <span style={{ color: theme.foreground }}>$ </span>
+      <span>ls -la </span>
+      <span style={{ color: theme.yellow }}>--color</span>
+      <span
+        className={cursorClassName}
+        style={{ backgroundColor: terminalCursorStyle === 'block' ? theme.cursor : undefined, borderColor: theme.cursor }}
+      >
+        {' '}
+      </span>
+      {'\n'}
+      <span style={{ color: theme.red }}>error:</span>
+      <span> permission denied </span>
+      <span style={{ color: theme.cyan }}>(exit 1)</span>
+    </pre>
+  )
+}
+
 function PreferencesSection() {
-  const { terminalFontSize, setTerminalFontSize } = usePreferences()
+  const {
+    terminalFontSize,
+    setTerminalFontSize,
+    terminalThemeId,
+    setTerminalThemeId,
+    terminalFontFamily,
+    setTerminalFontFamily,
+    terminalCursorStyle,
+    setTerminalCursorStyle,
+  } = usePreferences()
 
   return (
     <div className="card preset-filled-surface-100-900 space-y-4 p-6">
@@ -167,18 +218,74 @@ function PreferencesSection() {
         </div>
         <ThemeToggle />
       </div>
-      <label className="label min-w-0 max-w-xs">
-        <span className="label-text">Terminal font size</span>
-        <input
-          className="input"
-          type="number"
-          min={MIN_FONT_SIZE}
-          max={MAX_FONT_SIZE}
-          value={terminalFontSize}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => setTerminalFontSize(Number(event.target.value))}
-        />
-      </label>
-      <p className="text-xs opacity-60">Applies to terminal tabs opened after this change.</p>
+
+      <div className="border-surface-500/30 space-y-4 border-t pt-4">
+        <p className="font-medium">Terminal</p>
+
+        <TerminalPreview />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="label min-w-0">
+            <span className="label-text">Color theme</span>
+            <select
+              className="select"
+              value={terminalThemeId}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => setTerminalThemeId(event.target.value)}
+            >
+              {TERMINAL_THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="label min-w-0">
+            <span className="label-text">Font family</span>
+            <select
+              className="select"
+              value={terminalFontFamily}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) => setTerminalFontFamily(event.target.value)}
+            >
+              {TERMINAL_FONT_FAMILIES.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="label min-w-0">
+            <span className="label-text">Font size</span>
+            <input
+              className="input"
+              type="number"
+              min={MIN_FONT_SIZE}
+              max={MAX_FONT_SIZE}
+              value={terminalFontSize}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setTerminalFontSize(Number(event.target.value))}
+            />
+          </label>
+          <label className="label min-w-0">
+            <span className="label-text">Cursor style</span>
+            <select
+              className="select"
+              value={terminalCursorStyle}
+              onChange={(event: ChangeEvent<HTMLSelectElement>) =>
+                setTerminalCursorStyle(event.target.value as typeof terminalCursorStyle)
+              }
+            >
+              {TERMINAL_CURSOR_STYLES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="text-xs opacity-60">
+          Applies to terminal tabs opened after this change. Fonts other than "System monospace" only render if
+          installed on your device — otherwise your browser falls back to its default monospace font.
+        </p>
+      </div>
     </div>
   )
 }

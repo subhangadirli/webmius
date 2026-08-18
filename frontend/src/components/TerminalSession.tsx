@@ -5,6 +5,7 @@ import type { Socket } from 'socket.io-client'
 import Terminal, { type TerminalHandle } from './Terminal.tsx'
 import { createSshSocket } from '../terminal/socket.ts'
 import { usePreferences } from '../theme/PreferencesContext.tsx'
+import { getTerminalTheme } from '../theme/terminalThemes.ts'
 import type { SSHErrorEvent, SSHOutputEvent } from '../types'
 
 export type SessionStatus = 'connecting' | 'connected' | 'closed' | 'error'
@@ -18,7 +19,7 @@ interface TerminalSessionProps {
 function TerminalSession({ connectionId, active, onStatusChange }: TerminalSessionProps) {
   const terminalRef = useRef<TerminalHandle>(null)
   const socketRef = useRef<Socket | null>(null)
-  const { terminalFontSize } = usePreferences()
+  const { terminalFontSize, terminalThemeId, terminalFontFamily, terminalCursorStyle } = usePreferences()
 
   const [status, setStatus] = useState<SessionStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
@@ -92,7 +93,15 @@ function TerminalSession({ connectionId, active, onStatusChange }: TerminalSessi
         </div>
       )}
       <div className="min-h-0 flex-1 p-2">
-        <Terminal ref={terminalRef} onData={handleData} onResize={handleResize} fontSize={terminalFontSize} />
+        <Terminal
+          ref={terminalRef}
+          onData={handleData}
+          onResize={handleResize}
+          fontSize={terminalFontSize}
+          fontFamily={terminalFontFamily}
+          theme={getTerminalTheme(terminalThemeId)}
+          cursorStyle={terminalCursorStyle}
+        />
       </div>
     </div>
   )

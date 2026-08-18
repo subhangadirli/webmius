@@ -1,7 +1,8 @@
 import { FitAddon } from '@xterm/addon-fit'
-import { Terminal as XTerm } from '@xterm/xterm'
+import { Terminal as XTerm, type ITheme } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
+import { DEFAULT_TERMINAL_FONT_FAMILY, type TerminalCursorStyle } from '../theme/terminalThemes.ts'
 
 export interface TerminalHandle {
   write: (data: string) => void
@@ -14,9 +15,15 @@ interface TerminalProps {
   onData: (data: string) => void
   onResize: (cols: number, rows: number) => void
   fontSize?: number
+  fontFamily?: string
+  theme?: ITheme
+  cursorStyle?: TerminalCursorStyle
 }
 
-const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize, fontSize = 14 }, ref) => {
+const Terminal = forwardRef<TerminalHandle, TerminalProps>(function Terminal(
+  { onData, onResize, fontSize = 14, fontFamily = DEFAULT_TERMINAL_FONT_FAMILY, theme, cursorStyle = 'block' },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null)
   const xtermRef = useRef<XTerm | null>(null)
 
@@ -36,9 +43,10 @@ const Terminal = forwardRef<TerminalHandle, TerminalProps>(({ onData, onResize, 
 
     const xterm = new XTerm({
       cursorBlink: true,
+      cursorStyle,
       fontSize,
-      fontFamily: 'Menlo, Consolas, "Liberation Mono", monospace',
-      theme: { background: '#0a0a0a' },
+      fontFamily,
+      theme: theme ?? { background: '#0a0a0a' },
       rightClickSelectsWord: true,
     })
     const fitAddon = new FitAddon()
