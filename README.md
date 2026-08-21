@@ -7,7 +7,7 @@ Web-based SSH connection manager. See [`DOCS.md`](./DOCS.md) for the technical s
 Requires **either** [Docker](https://docs.docker.com/get-docker/) (with the Compose plugin) **or** [Podman](https://podman.io/) (with `podman-compose` or the `podman compose` plugin) — the same `docker-compose.yml` works with both.
 
 ```bash
-git clone <this repo> && cd webmius
+git clone https://github.com/subhangadirli/webmius.git && cd webmius
 cp .env.example .env      # fill in real secrets before deploying anywhere but localhost
 docker compose up --build # or: podman compose up --build
 ```
