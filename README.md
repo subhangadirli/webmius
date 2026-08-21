@@ -7,6 +7,7 @@ Web-based SSH connection manager. See [`DOCS.md`](./DOCS.md) for the technical s
 Requires **either** [Docker](https://docs.docker.com/get-docker/) (with the Compose plugin) **or** [Podman](https://podman.io/) (with `podman-compose` or the `podman compose` plugin) — the same `docker-compose.yml` works with both.
 
 ```bash
+git clone <this repo> && cd webmius
 cp .env.example .env      # fill in real secrets before deploying anywhere but localhost
 docker compose up --build # or: podman compose up --build
 ```
@@ -18,6 +19,11 @@ Then open:
 
 `docker-compose.override.yml` is auto-merged and enables hot reload (bind mounts) for local dev.
 
+> **Don't skip `cp .env.example .env`.** `docker-compose.yml` has insecure
+> fallback values for the database/secret env vars so a quick localhost test
+> still boots without it, but if you skip it and hit weird startup errors
+> (especially with Podman — see below), that's almost always why.
+
 ### Using Podman
 
 On SELinux-enforcing hosts (e.g. Fedora), bind-mounted volumes need an SELinux label to be readable/writable inside the container — the compose override already sets `:z` (shared label, since both the `backend` and `frontend` containers need concurrent access to their own mount), so no extra flags are needed.
@@ -27,6 +33,13 @@ If `podman compose` fails to connect, make sure the Podman API socket is running
 ```bash
 systemctl --user start podman.socket
 ```
+
+**Heads up:** unlike Docker Compose, `podman-compose` does not warn when a
+variable referenced in `docker-compose.yml` is undefined — it silently
+substitutes an empty string. If you forget `cp .env.example .env`, you won't
+see a helpful warning; you'll only notice once a container fails (see
+Troubleshooting below). Always double check `.env` exists before reporting
+an issue with Podman.
 
 ## Using Webmius
 
@@ -58,6 +71,45 @@ docker compose run --rm backend pytest -q
 docker compose run --rm frontend pnpm run typecheck
 docker compose run --rm frontend pnpm run test
 ```
+
+## Troubleshooting
+
+### `Error: Database is uninitialized and superuser password is not specified`
+
+The `db` container failed to boot because `POSTGRES_PASSWORD` was empty.
+This happens when:
+
+1. `.env` doesn't exist (you skipped `cp .env.example .env`), **and**
+2. a `db_data` volume from a *previous* run already exists — Postgres only
+   reads `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` the first time it
+   initializes an empty data directory, so once a volume exists with one set
+   of credentials, mismatched env vars on a later run won't fix it.
+
+Fix it by making sure `.env` exists, then resetting the database volume so
+it re-initializes with the right credentials:
+
+```bash
+cp .env.example .env   # if you haven't already
+docker compose down -v # or: podman compose down -v (the -v removes db_data)
+docker compose up --build
+```
+
+### Backend/frontend hang waiting on `db`, or can't authenticate to Postgres
+
+Same root cause as above — `backend` won't start until `db` reports healthy,
+so a crash-looping `db` looks like everything is just hanging. Check its
+logs first:
+
+```bash
+docker compose logs db   # or: podman compose logs db
+```
+
+### Login/session doesn't persist, or CSRF errors, over plain HTTP
+
+Make sure you're using the dev override (the default, un-suffixed
+`docker compose up`) rather than the `prod` profile without HTTPS —
+`SESSION_COOKIE_SECURE` needs to be `false` for cookies to work over plain
+`http://localhost`, which the dev config already handles for you.
 
 ## Stopping
 

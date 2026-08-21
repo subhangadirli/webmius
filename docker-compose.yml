@@ -1,14 +1,21 @@
+# NOTE on the `:-` fallbacks below: they only exist so `compose up` still
+# works out of the box on localhost if you forget to run
+# `cp .env.example .env` first (podman-compose, unlike Docker Compose,
+# substitutes undefined variables with an empty string *silently*, which
+# otherwise crashes Postgres with a confusing "superuser password is not
+# specified" error). They are NOT safe secrets - copy .env.example to .env
+# and set real values before running this anywhere but your own machine.
 services:
   db:
     image: docker.io/library/postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-webmius}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-webmius-dev-password}
+      POSTGRES_DB: ${POSTGRES_DB:-webmius}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-webmius}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -17,9 +24,9 @@ services:
     build: ./backend
     environment:
       FLASK_ENV: ${FLASK_ENV:-production}
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      SECRET_KEY: ${SECRET_KEY}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-webmius}:${POSTGRES_PASSWORD:-webmius-dev-password}@db:5432/${POSTGRES_DB:-webmius}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-do-not-use-in-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-do-not-use-in-production}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
     depends_on:
       db:
