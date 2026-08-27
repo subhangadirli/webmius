@@ -26,7 +26,16 @@ class Config:
     SQLALCHEMY_DATABASE_URI = _database_url(os.environ.get("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
-    CORS_ORIGINS = _parse_origins(os.environ.get("CORS_ORIGINS", "http://localhost:5173"))
+
+    # Origin the backend puts into emailed links (password reset, etc.)
+    # since it has no other way to know the frontend's real address.
+    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+    # Allowed CORS origin (also the Socket.IO websocket origin check). In a
+    # single-origin deploy the backend serves the built frontend on the same
+    # host, so defaulting to FRONTEND_URL makes the socket handshake pass
+    # with the same config that drives emailed links — no separate var to set.
+    CORS_ORIGINS = _parse_origins(os.environ.get("CORS_ORIGINS", FRONTEND_URL))
 
     # Cookies are HttpOnly + SameSite=Lax by default; Secure requires HTTPS,
     # which only the M6 reverse-proxy ("prod" compose profile) provides, so
@@ -47,10 +56,6 @@ class Config:
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
     SMTP_FROM_ADDRESS = os.environ.get("SMTP_FROM_ADDRESS", "webmius@localhost")
     SMTP_USE_TLS = _bool_env("SMTP_USE_TLS", True)
-
-    # Origin the backend puts into emailed links (password reset, etc.)
-    # since it has no other way to know the frontend's real address.
-    FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 
 class DevelopmentConfig(Config):
