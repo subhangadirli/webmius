@@ -1,0 +1,8 @@
+{
+  "name": "webmius-deploy",
+  "private": true,
+  "description": "Build-time only package: exists so Heroku's Node.js buildpack can compile frontend/ into frontend/dist during slug compilation (see .buildpacks). Not used for local development - work inside frontend/ directly.",
+  "scripts": {
+    "heroku-postbuild": "cd frontend && npx --yes pnpm@9.15.9 install --frozen-lockfile && VITE_API_URL='' npx --yes pnpm@9.15.9 run build"
+  }
+}

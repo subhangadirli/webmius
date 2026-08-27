@@ -59,6 +59,43 @@ VITE_API_URL=https://localhost:8443 CORS_ORIGINS=http://localhost:5173,https://l
 
 Then open https://localhost:8443 (accept the self-signed cert warning — Caddy's internal CA isn't in your system trust store). On a rootful/production host, set `PROXY_PORT=443` to bind the standard port instead.
 
+## Deploying to Heroku
+
+Single-origin deploy: Flask serves the built frontend from the same domain, so the session/CSRF cookies stay first-party and no CORS setup is needed. The frontend is compiled automatically during slug compilation (Node.js + Python buildpacks), so there is nothing to build or commit by hand.
+
+### One command
+
+```bash
+deploy/heroku.sh my-webmius-app
+```
+
+That creates the app, provisions Heroku Postgres, generates and sets `SECRET_KEY`/`ENCRYPTION_KEY`, pushes the current branch, points `FRONTEND_URL` at the app's public URL, and opens it. (Requires the [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli).)
+
+### One click
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://dashboard.heroku.com/new?template=https://github.com/subhangadirli/webmius) — driven by [`app.json`](./app.json), which declares the Postgres addon and auto-generates the two secrets; you only optionally fill in `FRONTEND_URL` for email links.
+
+### Manual
+
+```bash
+heroku create my-webmius-app
+heroku addons:create heroku-postgresql:essential          # sets DATABASE_URL
+heroku config:set SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+heroku config:set ENCRYPTION_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
+heroku config:set FLASK_ENV=production
+git push heroku main
+```
+
+### How it works
+
+* Root [`Procfile`](./Procfile): `release` runs DB migrations (`flask db upgrade`); `web` starts gunicorn with **one worker** (`--threads 8`) — Socket.IO runs in threading mode, which can't scale past one worker without adding a message queue.
+* Root [`package.json`](./package.json) + [`.buildpacks`](./.buildpacks): the Node.js buildpack compiles `frontend/` into `frontend/dist/` during the build with `VITE_API_URL=''`, which makes the built app call the API same-origin.
+* Flask serves `frontend/dist/` itself (see `_register_spa` in `backend/app/__init__.py`); with no `dist/` present (dev/test) it's a no-op.
+* Root [`requirements.txt`](./requirements.txt) exists only so the Python buildpack detects the project; it just includes `backend/requirements.txt`.
+* Optional: set `SMTP_*` config vars to send real password-reset email; without them, reset links are logged to `heroku logs --tail`.
+
+## Running tests
+
 ## Running tests
 
 Both suites also run in CI (`.github/workflows/ci.yml`) on every push/PR, alongside a build check for both Docker images. Swap `docker compose` for `podman compose` as elsewhere in this README.

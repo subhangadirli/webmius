@@ -1,0 +1,34 @@
+{
+  "name": "Webmius",
+  "description": "Web-based SSH connection manager built with Flask, Socket.IO and React.",
+  "repository": "https://github.com/subhangadirli/webmius",
+  "keywords": ["flask", "react", "ssh", "terminal", "socketio"],
+  "stack": "heroku-24",
+  "buildpacks": [
+    { "url": "heroku/nodejs" },
+    { "url": "heroku/python" }
+  ],
+  "formation": {
+    "web": { "quantity": 1, "size": "basic" }
+  },
+  "addons": [
+    { "plan": "heroku-postgresql:essential" }
+  ],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Flask session signing key. Auto-generated on deploy.",
+      "generator": "secret"
+    },
+    "ENCRYPTION_KEY": {
+      "description": "Key used to encrypt stored SSH credentials at rest. Auto-generated on deploy.",
+      "generator": "secret"
+    },
+    "FLASK_ENV": {
+      "value": "production"
+    },
+    "FRONTEND_URL": {
+      "description": "Public URL of this app, e.g. https://your-app-abc123.herokuapp.com (used in emailed links such as password reset). Leave empty if not using email features.",
+      "required": false
+    }
+  }
+}

@@ -1,0 +1,4 @@
+# Root-level requirements file: Heroku's Python buildpack detects the
+# project by looking for requirements.txt in the repo root, while the real
+# dependency list lives in backend/.
+-r backend/requirements.txt

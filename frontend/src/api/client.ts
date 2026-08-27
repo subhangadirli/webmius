@@ -11,7 +11,10 @@ import type {
   User,
 } from '../types'
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000'
+// NOTE: uses ?? (not ||) so a build-time VITE_API_URL='' resolves to the
+// empty string, which makes every request same-origin (used by the Heroku
+// single-app deploy where Flask serves the built frontend itself).
 
 interface ApiErrorBody {
   error?: string

@@ -12,9 +12,18 @@ def _bool_env(name, default):
     return value.strip().lower() in ("1", "true", "yes", "on")
 
 
+def _database_url(value):
+    # Heroku Postgres injects DATABASE_URL with the legacy "postgres://"
+    # scheme, which SQLAlchemy 2.x refuses to load (no such dialect);
+    # normalize it to "postgresql://" so addon-provisioned URLs just work.
+    if value and value.startswith("postgres://"):
+        return value.replace("postgres://", "postgresql://", 1)
+    return value
+
+
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY")
-    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    SQLALCHEMY_DATABASE_URI = _database_url(os.environ.get("DATABASE_URL"))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
     CORS_ORIGINS = _parse_origins(os.environ.get("CORS_ORIGINS", "http://localhost:5173"))
