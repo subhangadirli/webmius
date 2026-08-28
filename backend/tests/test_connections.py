@@ -312,3 +312,25 @@ def test_list_connections_filtered_by_tag(client):
     assert response.status_code == 200
     names = [c["name"] for c in response.get_json()]
     assert names == ["web-box"]
+def test_update_connection_rejects_invalid_port(client):
+    register_and_login(client)
+    created = create_connection(client).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"port": "not-a-port"},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 400
+
+
+def test_update_connection_rejects_empty_name(client):
+    register_and_login(client)
+    created = create_connection(client).get_json()
+
+    response = client.put(
+        f"/api/connections/{created['id']}",
+        json={"name": "   "},
+        headers=csrf_headers(client),
+    )
+    assert response.status_code == 400

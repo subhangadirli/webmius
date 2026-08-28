@@ -258,3 +258,47 @@ def test_logout_clears_session(client):
     assert logout_response.status_code == 204
 
     assert client.get("/api/me").status_code == 401
+def test_update_me_rejects_duplicate_email(client):
+    register(client, username="alice", email="alice@example.com")
+    register(client, username="bob", email="bob@example.com")
+    login(client, username="bob", password="correcthorse")
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.patch(
+        "/api/me", json={"email": "alice@example.com"}, headers={"X-CSRF-Token": csrf_token}
+    )
+    assert response.status_code == 409
+
+
+def test_update_me_rejects_empty_username(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.patch("/api/me", json={"username": "  "}, headers={"X-CSRF-Token": csrf_token})
+    assert response.status_code == 400
+
+
+def test_update_me_keeps_own_username_when_unchanged(client):
+    # Setting the same username/email back must not hit the uniqueness check
+    # (which compares against the current owner itself).
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    response = client.patch(
+        "/api/me",
+        json={"username": "alice", "email": "alice@example.com"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert response.status_code == 200
+
+
+def test_change_password_requires_both_fields(client):
+    register(client)
+    login(client)
+    csrf_token = client.get_cookie("csrf_token").value
+
+    for payload in ({"current_password": "correcthorse"}, {"new_password": "newpassword123"}):
+        response = client.post("/api/me/password", json=payload, headers={"X-CSRF-Token": csrf_token})
+        assert response.status_code == 400

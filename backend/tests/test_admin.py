@@ -176,3 +176,8 @@ def test_deleting_user_cascades_their_connections(client):
 
     with client.application.app_context():
         assert SSHConnection.query.filter_by(user_id=bob["id"]).count() == 0
+def test_admin_delete_nonexistent_user_returns_404(client):
+    register_and_login(client, username="alice", email="alice@example.com")
+
+    response = client.delete("/api/admin/users/9999", headers=csrf_headers(client))
+    assert response.status_code == 404
