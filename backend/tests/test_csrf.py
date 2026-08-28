@@ -33,7 +33,7 @@ def csrf_header(client):
 def test_csrf_cookie_is_issued_even_without_a_session(client):
     # The SPA must be able to read the csrf cookie on an unauthenticated request
     # so its first authenticated mutation carries a valid token.
-    resp = client.get("/api/health")
+    resp = client.get("/health")
     assert resp.status_code == 200
     cookie = client.get_cookie("csrf_token")
     assert cookie is not None and cookie.value
