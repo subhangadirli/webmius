@@ -23,7 +23,15 @@ def get_current_user():
                 return None
         session["last_seen"] = now.isoformat()
 
-    return db.session.get(User, user_id)
+    user = db.session.get(User, user_id)
+    if user is None:
+        return None
+    if not user.is_active:
+        # Suspended accounts lose API/WS access immediately, even with a
+        # still-valid session cookie — every request re-checks the DB row.
+        session.clear()
+        return None
+    return user
 
 
 def login_required(view_func):

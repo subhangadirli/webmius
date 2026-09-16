@@ -76,6 +76,11 @@ def list_connections():
 @connections_bp.post("/connections")
 @login_required
 def create_connection():
+    if g.current_user.max_connections is not None:
+        current_count = SSHConnection.query.filter_by(user_id=g.current_user.id).count()
+        if current_count >= g.current_user.max_connections:
+            return jsonify(error="connection limit reached for your account"), 403
+
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     host = (data.get("host") or "").strip()

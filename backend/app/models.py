@@ -15,6 +15,15 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="user")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    # Moderation / granular access control (managed via /api/admin/users).
+    # is_active=False blocks login and invalidates existing sessions (checked
+    # in get_current_user on every request). can_ssh=False blocks new SSH
+    # sessions but leaves dashboard/history usable. max_connections=None
+    # means unlimited saved SSH connections.
+    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    can_ssh = db.Column(db.Boolean, nullable=False, default=True)
+    max_connections = db.Column(db.Integer, nullable=True)
+    last_login_at = db.Column(db.DateTime, nullable=True)
 
     connections = db.relationship(
         "SSHConnection", backref="owner", cascade="all, delete-orphan"

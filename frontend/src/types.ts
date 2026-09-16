@@ -72,8 +72,19 @@ export interface AdminUser {
   username: string
   email: string
   role: Role
+  is_active: boolean
+  can_ssh: boolean
+  max_connections: number | null
+  last_login_at: string | null
   connection_count: number
   created_at: string | null
+}
+
+export interface AdminUserUpdate {
+  role?: Role
+  is_active?: boolean
+  can_ssh?: boolean
+  max_connections?: number | null
 }
 
 export interface UpdateProfilePayload {

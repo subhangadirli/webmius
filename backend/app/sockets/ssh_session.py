@@ -158,6 +158,11 @@ class SSHSessionNamespace(Namespace):
             emit("ssh_error", {"message": "connection not found"})
             return
 
+        if not user.can_ssh:
+            _record_attempt(user, connection, "failed", "SSH access is disabled for your account")
+            emit("ssh_error", {"message": "SSH access is disabled for your account"})
+            return
+
         if connection.auth_type == "password":
             if not connection.encrypted_password:
                 _record_attempt(user, connection, "failed", "no password stored for this connection")

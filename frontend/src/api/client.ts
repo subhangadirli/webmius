@@ -1,5 +1,6 @@
 import type {
   AdminUser,
+  AdminUserUpdate,
   AppSettings,
   ChangePasswordPayload,
   ConnectionLogEntry,
@@ -88,7 +89,30 @@ export const api = {
   listConnectionLogs: () => request<ConnectionLogEntry[]>('/api/connection-logs'),
   getConnectionLogRecording: (id: number) =>
     request<{ recording: string | null }>(`/api/connection-logs/${id}/recording`),
-  listAdminUsers: () => request<AdminUser[]>('/api/admin/users'),
+  listAdminUsers: (params?: { q?: string; role?: string; status?: string; sort?: string; order?: string }) => {
+    const search = new URLSearchParams()
+    if (params?.q) search.set('q', params.q)
+    if (params?.role) search.set('role', params.role)
+    if (params?.status) search.set('status', params.status)
+    if (params?.sort) search.set('sort', params.sort)
+    if (params?.order) search.set('order', params.order)
+    const suffix = search.toString() ? `?${search.toString()}` : ''
+    return request<AdminUser[]>(`/api/admin/users${suffix}`)
+  },
+  getAdminUser: (id: number) => request<AdminUser>(`/api/admin/users/${id}`),
+  listAdminUserConnections: (id: number) =>
+    request<SSHConnection[]>(`/api/admin/users/${id}/connections`),
+  listAdminUserLogs: (id: number) =>
+    request<ConnectionLogEntry[]>(`/api/admin/users/${id}/logs`),
+  updateAdminUser: (id: number, patch: AdminUserUpdate) =>
+    request<AdminUser>(`/api/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+  updateAdminUserRole: (id: number, role: 'user' | 'admin') =>
+    request<AdminUser>(`/api/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  resetAdminUserPassword: (id: number, new_password: string) =>
+    request<AdminUser>(`/api/admin/users/${id}/password`, {
+      method: 'POST',
+      body: JSON.stringify({ new_password }),
+    }),
   deleteAdminUser: (id: number) => request<null>(`/api/admin/users/${id}`, { method: 'DELETE' }),
   getAppSettings: () => request<AppSettings>('/api/admin/settings'),
   updateAppSettings: (data: Partial<AppSettings>) =>

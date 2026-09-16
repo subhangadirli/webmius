@@ -72,7 +72,13 @@ def login():
     if user is None or not verify_password(password, user.password_hash):
         return jsonify(error="invalid username or password"), 401
 
+    if not user.is_active:
+        return jsonify(error="account is disabled"), 403
+
     session["user_id"] = user.id
+
+    user.last_login_at = datetime.now(timezone.utc)
+    db.session.commit()
 
     timeout = get_app_settings().session_timeout_minutes
     if timeout:

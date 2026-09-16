@@ -80,6 +80,10 @@ The system follows a client-server architecture:
 * email
 * password\_hash
 * role ("user" or "admin"; the first account ever registered on an instance becomes "admin", everyone after is "user")
+* is_active (suspended accounts can't log in and lose API/WebSocket access immediately, even with a valid session cookie)
+* can_ssh (false blocks new SSH sessions while leaving dashboard/history usable)
+* max_connections (nullable; null means unlimited saved SSH connections — enforced on POST /api/connections)
+* last_login_at (nullable, set on every successful login)
 
 #### SSH\_Connections Table
 
@@ -137,8 +141,13 @@ All `/api/*` mutating requests (state-changing methods) additionally require an 
 
 #### Admin (role: "admin" only)
 
-* GET /api/admin/users — every user's id/username/email/role/connection count/created_at
-* DELETE /api/admin/users/{id} — deletes a user and cascades their connections, logs, and login sessions; blocked for self-deletion and for deleting the last remaining admin
+* GET /api/admin/users — every user's id/username/email/role/is_active/can_ssh/max_connections/last_login_at/connection count/created_at; accepts optional `?q=` (username/email substring), `?role=user|admin`, `?status=active|disabled`, `?sort=username|email|created_at|connection_count&order=asc|desc`
+* GET /api/admin/users/{id} — single user detail
+* GET /api/admin/users/{id}/connections — that user's saved SSH connections (no secrets)
+* GET /api/admin/users/{id}/logs — that user's recent connection logs (most recent 100, no recording blobs)
+* PATCH /api/admin/users/{id} — sets `role` (`"user"`/`"admin"`), `is_active`, `can_ssh`, `max_connections` (non-negative int or null); blocked for self role-change/deactivation and for demoting/deactivating/deleting the last remaining active admin
+* POST /api/admin/users/{id}/password — admin password reset (`{"new_password": string}`); revokes outstanding self-service reset tokens (existing sessions stay valid — suspend first for immediate lockout)
+* DELETE /api/admin/users/{id} — deletes a user and cascades their connections, logs, and login sessions; blocked for self-deletion and for deleting the last remaining active admin
 
 #### SSH Session
 
