@@ -5,6 +5,7 @@ import type {
   ChangePasswordPayload,
   ConnectionLogEntry,
   ConnectionPayload,
+  ConnectionShare,
   LoginPayload,
   RegisterPayload,
   SSHConnection,
@@ -86,6 +87,15 @@ export const api = {
   updateConnection: (id: number, data: Partial<ConnectionPayload>) =>
     request<SSHConnection>(`/api/connections/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteConnection: (id: number) => request<null>(`/api/connections/${id}`, { method: 'DELETE' }),
+  listConnectionShares: (id: number) =>
+    request<ConnectionShare[]>(`/api/connections/${id}/shares`),
+  shareConnection: (id: number, target: { username?: string; email?: string; user_id?: number }) =>
+    request<ConnectionShare>(`/api/connections/${id}/shares`, {
+      method: 'POST',
+      body: JSON.stringify(target),
+    }),
+  unshareConnection: (id: number, userId: number) =>
+    request<null>(`/api/connections/${id}/shares/${userId}`, { method: 'DELETE' }),
   listConnectionLogs: () => request<ConnectionLogEntry[]>('/api/connection-logs'),
   getConnectionLogRecording: (id: number) =>
     request<{ recording: string | null }>(`/api/connection-logs/${id}/recording`),

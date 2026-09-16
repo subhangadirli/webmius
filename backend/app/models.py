@@ -31,6 +31,14 @@ class User(db.Model):
     connection_logs = db.relationship(
         "ConnectionLog", backref="user", cascade="all, delete-orphan"
     )
+    # Shares granted TO this user by other users (recipient side). Shares of
+    # connections this user owns cascade via SSHConnection.shares instead.
+    received_shares = db.relationship(
+        "ConnectionShare",
+        foreign_keys="ConnectionShare.shared_with_user_id",
+        backref="shared_with",
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -94,8 +102,38 @@ class SSHConnection(db.Model):
     tags = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+    shares = db.relationship(
+        "ConnectionShare", backref="connection", cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<SSHConnection {self.name} ({self.host})>"
+
+
+class ConnectionShare(db.Model):
+    """Grants a non-owning user use-only access to a connection.
+
+    Shared users can list the connection and open SSH sessions through the
+    owner's stored credentials. They cannot edit, delete, or re-share it,
+    and secrets are never exposed via the API either way.
+    """
+
+    __tablename__ = "connection_shares"
+    __table_args__ = (
+        db.UniqueConstraint("connection_id", "shared_with_user_id", name="uq_share_connection_user"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    connection_id = db.Column(
+        db.Integer, db.ForeignKey("ssh_connections.id", ondelete="CASCADE"), nullable=False
+    )
+    shared_with_user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f"<ConnectionShare connection={self.connection_id} user={self.shared_with_user_id}>"
 
 
 class ConnectionLog(db.Model):

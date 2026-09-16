@@ -2,7 +2,7 @@ import paramiko
 from flask import Blueprint, g, jsonify, request
 
 from ..extensions import db
-from ..models import SSHConnection
+from ..models import ConnectionShare, SSHConnection, User
 from ..security.auth import login_required
 from ..security.crypto import encrypt_value
 from ..security.ssh_keys import parse_private_key
@@ -31,7 +31,7 @@ def _normalize_tags(raw):
     return tags
 
 
-def _connection_to_dict(connection):
+def _connection_to_dict(connection, *, shared=False, owner_username=None, share_count=0):
     return {
         "id": connection.id,
         "name": connection.name,
@@ -41,11 +41,28 @@ def _connection_to_dict(connection):
         "auth_type": connection.auth_type,
         "tags": _parse_tags(connection.tags),
         "created_at": connection.created_at.isoformat() if connection.created_at else None,
+        # Sharing metadata (additive — older clients ignore unknown fields).
+        "shared": shared,
+        "owner_username": owner_username,
+        "share_count": share_count,
     }
 
 
 def _get_owned_connection(connection_id):
     return SSHConnection.query.filter_by(id=connection_id, user_id=g.current_user.id).first()
+
+
+def get_accessible_connection(user_id, connection_id):
+    """Connection the user owns or has shared with them, else None."""
+    connection = SSHConnection.query.filter_by(id=connection_id, user_id=user_id).first()
+    if connection is not None:
+        return connection
+    share = ConnectionShare.query.filter_by(
+        connection_id=connection_id, shared_with_user_id=user_id
+    ).first()
+    if share is None:
+        return None
+    return SSHConnection.query.filter_by(id=connection_id).first()
 
 
 def _validate_private_key(private_key, passphrase):
@@ -62,15 +79,47 @@ def _validate_private_key(private_key, passphrase):
 @connections_bp.get("/connections")
 @login_required
 def list_connections():
-    connections = (
+    owned = (
         SSHConnection.query.filter_by(user_id=g.current_user.id)
         .order_by(SSHConnection.created_at.desc())
         .all()
     )
+    shares = ConnectionShare.query.filter_by(shared_with_user_id=g.current_user.id).all()
+    shared_ids = [s.connection_id for s in shares]
+    shared = (
+        SSHConnection.query.filter(SSHConnection.id.in_(shared_ids))
+        .order_by(SSHConnection.created_at.desc())
+        .all()
+        if shared_ids
+        else []
+    )
+    # Exclude anything the user now owns directly (e.g. re-created rows).
+    shared = [c for c in shared if c.user_id != g.current_user.id]
+
     tag_filter = (request.args.get("tag") or "").strip().lower()
-    if tag_filter:
-        connections = [c for c in connections if tag_filter in _parse_tags(c.tags)]
-    return jsonify([_connection_to_dict(c) for c in connections]), 200
+    result = []
+    for c in owned:
+        if tag_filter and tag_filter not in _parse_tags(c.tags):
+            continue
+        result.append(
+            _connection_to_dict(
+                c, shared=False, owner_username=None, share_count=len(c.shares)
+            )
+        )
+    for c in shared:
+        if tag_filter and tag_filter not in _parse_tags(c.tags):
+            continue
+        owner = db.session.get(User, c.user_id)
+        result.append(
+            _connection_to_dict(
+                c,
+                shared=True,
+                owner_username=owner.username if owner else None,
+                share_count=0,
+            )
+        )
+    result.sort(key=lambda d: d["created_at"] or "", reverse=True)
+    return jsonify(result), 200
 
 
 @connections_bp.post("/connections")
@@ -131,7 +180,7 @@ def create_connection():
     db.session.add(connection)
     db.session.commit()
 
-    return jsonify(_connection_to_dict(connection)), 201
+    return jsonify(_connection_to_dict(connection, share_count=0)), 201
 
 
 @connections_bp.put("/connections/<int:connection_id>")
@@ -193,7 +242,7 @@ def update_connection(connection_id):
 
     db.session.commit()
 
-    return jsonify(_connection_to_dict(connection)), 200
+    return jsonify(_connection_to_dict(connection, share_count=len(connection.shares))), 200
 
 
 @connections_bp.delete("/connections/<int:connection_id>")
@@ -204,6 +253,86 @@ def delete_connection(connection_id):
         return jsonify(error="connection not found"), 404
 
     db.session.delete(connection)
+    db.session.commit()
+
+    return "", 204
+
+
+def _share_to_dict(share):
+    user = db.session.get(User, share.shared_with_user_id)
+    return {
+        "user_id": share.shared_with_user_id,
+        "username": user.username if user else None,
+        "email": user.email if user else None,
+        "created_at": share.created_at.isoformat() if share.created_at else None,
+    }
+
+
+@connections_bp.get("/connections/<int:connection_id>/shares")
+@login_required
+def list_shares(connection_id):
+    connection = _get_owned_connection(connection_id)
+    if connection is None:
+        return jsonify(error="connection not found"), 404
+    return jsonify([_share_to_dict(s) for s in connection.shares]), 200
+
+
+@connections_bp.post("/connections/<int:connection_id>/shares")
+@login_required
+def create_share(connection_id):
+    connection = _get_owned_connection(connection_id)
+    if connection is None:
+        return jsonify(error="connection not found"), 404
+
+    data = request.get_json(silent=True) or {}
+    target = None
+    if data.get("user_id") is not None:
+        try:
+            target_id = int(data.get("user_id"))
+        except (TypeError, ValueError):
+            return jsonify(error="user_id must be an integer"), 400
+        target = db.session.get(User, target_id)
+    elif (data.get("username") or "").strip():
+        target = User.query.filter_by(username=(data.get("username") or "").strip()).first()
+    elif (data.get("email") or "").strip():
+        target = User.query.filter_by(email=(data.get("email") or "").strip()).first()
+    else:
+        return jsonify(error="username, email, or user_id is required"), 400
+
+    if target is None:
+        return jsonify(error="user not found"), 404
+    if target.id == g.current_user.id:
+        return jsonify(error="cannot share a connection with yourself"), 400
+    if not target.is_active:
+        return jsonify(error="cannot share with a suspended account"), 400
+
+    existing = ConnectionShare.query.filter_by(
+        connection_id=connection.id, shared_with_user_id=target.id
+    ).first()
+    if existing is not None:
+        return jsonify(error="connection is already shared with this user"), 409
+
+    share = ConnectionShare(connection_id=connection.id, shared_with_user_id=target.id)
+    db.session.add(share)
+    db.session.commit()
+
+    return jsonify(_share_to_dict(share)), 201
+
+
+@connections_bp.delete("/connections/<int:connection_id>/shares/<int:user_id>")
+@login_required
+def delete_share(connection_id, user_id):
+    connection = _get_owned_connection(connection_id)
+    if connection is None:
+        return jsonify(error="connection not found"), 404
+
+    share = ConnectionShare.query.filter_by(
+        connection_id=connection.id, shared_with_user_id=user_id
+    ).first()
+    if share is None:
+        return jsonify(error="share not found"), 404
+
+    db.session.delete(share)
     db.session.commit()
 
     return "", 204

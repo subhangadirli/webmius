@@ -67,6 +67,9 @@ describe('ConnectionForm', () => {
           auth_type: 'password',
           tags: ['prod', 'web'],
           created_at: null,
+          shared: false,
+          owner_username: null,
+          share_count: 0,
         }}
         onSubmit={vi.fn()}
         onCancel={vi.fn()}

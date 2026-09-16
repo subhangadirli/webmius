@@ -7,6 +7,7 @@ interface ConnectionListProps {
   connections: SSHConnection[]
   onEdit: (connection: SSHConnection) => void
   onDelete: (connection: SSHConnection) => void
+  onShare: (connection: SSHConnection) => void
   deletingId?: number | null
   onTagClick?: (tag: string) => void
 }
@@ -15,6 +16,7 @@ function ConnectionList({
   connections,
   onEdit,
   onDelete,
+  onShare,
   deletingId = null,
   onTagClick,
 }: ConnectionListProps) {
@@ -34,10 +36,26 @@ function ConnectionList({
                 <p className="text-sm opacity-60 break-words">
                   {connection.username}@{connection.host}:{connection.port}
                 </p>
+                {connection.shared && (
+                  <p className="text-xs opacity-60">
+                    Shared{connection.owner_username ? ` by ${connection.owner_username}` : ''} — use only
+                  </p>
+                )}
               </div>
-              <span className="badge preset-tonal shrink-0 text-xs">
-                {connection.auth_type === 'key' ? 'SSH key' : 'Password'}
-              </span>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span className="badge preset-tonal text-xs">
+                  {connection.auth_type === 'key' ? 'SSH key' : 'Password'}
+                </span>
+                {connection.shared ? (
+                  <span className="badge preset-tonal-primary text-xs">Shared</span>
+                ) : (
+                  connection.share_count > 0 && (
+                    <span className="badge preset-tonal-primary text-xs">
+                      Shared with {connection.share_count}
+                    </span>
+                  )
+                )}
+              </div>
             </div>
             {connection.tags.length > 0 && (
               <div className="flex flex-wrap gap-1">
@@ -53,7 +71,7 @@ function ConnectionList({
                 ))}
               </div>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <Link
                 to="/terminal"
                 state={{ connectionId: connection.id }}
@@ -62,24 +80,36 @@ function ConnectionList({
                 <HugeiconsIcon icon={TerminalIcon} size={16} strokeWidth={1.5} />
                 Connect
               </Link>
-              <button
-                type="button"
-                className="btn btn-sm preset-tonal"
-                onClick={() => onEdit(connection)}
-                disabled={isDeleting}
-              >
-                <HugeiconsIcon icon={PencilEdit02Icon} size={16} strokeWidth={1.5} />
-                Edit
-              </button>
-              <button
-                type="button"
-                className="btn btn-sm preset-tonal-error"
-                onClick={() => onDelete(connection)}
-                disabled={isDeleting}
-              >
-                <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
-                {isDeleting ? 'Deleting…' : 'Delete'}
-              </button>
+              {!connection.shared && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-sm preset-tonal"
+                    onClick={() => onShare(connection)}
+                    disabled={isDeleting}
+                  >
+                    Share
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm preset-tonal"
+                    onClick={() => onEdit(connection)}
+                    disabled={isDeleting}
+                  >
+                    <HugeiconsIcon icon={PencilEdit02Icon} size={16} strokeWidth={1.5} />
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-sm preset-tonal-error"
+                    onClick={() => onDelete(connection)}
+                    disabled={isDeleting}
+                  >
+                    <HugeiconsIcon icon={Delete02Icon} size={16} strokeWidth={1.5} />
+                    {isDeleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </>
+              )}
             </div>
           </li>
         )

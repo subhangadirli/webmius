@@ -18,6 +18,16 @@ export interface SSHConnection {
   auth_type: AuthType
   tags: string[]
   created_at: string | null
+  shared: boolean
+  owner_username: string | null
+  share_count: number
+}
+
+export interface ConnectionShare {
+  user_id: number
+  username: string | null
+  email: string | null
+  created_at: string | null
 }
 
 export interface RegisterPayload {

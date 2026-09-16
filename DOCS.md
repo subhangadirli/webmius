@@ -123,10 +123,15 @@ The system follows a client-server architecture:
 
 #### SSH Connections
 
-* GET /api/connections — accepts an optional `?tag=` query param to filter by tag
+* GET /api/connections — accepts an optional `?tag=` query param to filter by tag; returns owned connections plus connections other users shared with you (`shared: true`, `owner_username` set; owned rows carry `share_count`)
 * POST /api/connections
 * PUT /api/connections/{id}
 * DELETE /api/connections/{id}
+* GET /api/connections/{id}/shares — owner only; who this connection is shared with
+* POST /api/connections/{id}/shares — owner only; body takes `username`, `email`, or `user_id` (409 if already shared; 400 for self-share or suspended recipients)
+* DELETE /api/connections/{id}/shares/{userId} — owner only; revokes access
+
+Sharing is use-only: shared users can list the connection and open SSH sessions through the owner's stored credentials (sessions are logged under the connecting user's own history), but cannot edit, delete, or re-share it, and secrets are never exposed in any response. Edit/delete/share stay owner-only (shared users get 404 on those routes, same as for strangers).
 
 `auth_type` is `"password"` or `"key"`. Password connections take a `password` field; key connections take a `private_key` (PEM/OpenSSH format) and an optional `private_key_passphrase` if the key itself is encrypted. The key is parsed and validated server-side at save time (unrecognized formats or a missing/wrong passphrase are rejected with a 400), not just at connect time. As with `password`, omitting `private_key`/`private_key_passphrase` on an update leaves the stored value unchanged.
 

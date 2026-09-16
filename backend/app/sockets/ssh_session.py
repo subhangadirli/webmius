@@ -9,6 +9,7 @@ from flask_socketio import Namespace, disconnect, emit
 
 from ..extensions import db, socketio
 from ..models import ConnectionLog, SSHConnection
+from ..routes.connections import get_accessible_connection
 from ..security.auth import get_current_user
 from ..security.crypto import decrypt_value
 from ..security.ssh_keys import parse_private_key
@@ -151,9 +152,7 @@ class SSHSessionNamespace(Namespace):
             return
 
         payload = payload or {}
-        connection = SSHConnection.query.filter_by(
-            id=payload.get("connection_id"), user_id=user.id
-        ).first()
+        connection = get_accessible_connection(user.id, (payload or {}).get("connection_id"))
         if connection is None:
             emit("ssh_error", {"message": "connection not found"})
             return

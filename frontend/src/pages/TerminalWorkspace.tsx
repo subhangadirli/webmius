@@ -137,6 +137,9 @@ function TerminalWorkspace() {
                   onClick={() => openTab(c.id)}
                 >
                   {c.name}
+                  {c.shared && c.owner_username && (
+                    <span className="opacity-60"> (shared by {c.owner_username})</span>
+                  )}
                 </button>
               ))}
             </div>

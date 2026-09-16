@@ -7,10 +7,12 @@ import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext.tsx'
 import ConnectionForm from '../components/ConnectionForm.tsx'
 import ConnectionList from '../components/ConnectionList.tsx'
+import ShareDialog from '../components/ShareDialog.tsx'
 import ThemeToggle from '../components/ThemeToggle.tsx'
 import type { ConnectionPayload, SSHConnection } from '../types'
 
 type FormMode = null | 'create' | SSHConnection
+type OwnershipFilter = 'all' | 'mine' | 'shared'
 
 function Dashboard() {
   const { user, logout } = useAuth()
@@ -23,6 +25,8 @@ function Dashboard() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [activeTag, setActiveTag] = useState<string | null>(null)
+  const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('all')
+  const [shareTarget, setShareTarget] = useState<SSHConnection | null>(null)
 
   const loadConnections = async () => {
     setLoading(true)
@@ -74,10 +78,14 @@ function Dashboard() {
 
   const isEditing = formMode !== null && formMode !== 'create'
 
-  const allTags = [...new Set(connections.flatMap((c) => c.tags))].sort()
-  const visibleConnections = activeTag
-    ? connections.filter((c) => c.tags.includes(activeTag))
-    : connections
+  const allTags = [...new Set(connections.flatMap((c) => c.tags ?? []))].sort()
+  const hasShared = connections.some((c) => c.shared)
+  const visibleConnections = connections.filter((c) => {
+    if (ownershipFilter === 'mine' && c.shared) return false
+    if (ownershipFilter === 'shared' && !c.shared) return false
+    if (activeTag && !(c.tags ?? []).includes(activeTag)) return false
+    return true
+  })
 
   return (
     <div className="min-h-screen">
@@ -173,6 +181,26 @@ function Dashboard() {
           </div>
         )}
 
+        {!formMode && hasShared && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm opacity-60">Show:</span>
+            {(['all', 'mine', 'shared'] as OwnershipFilter[]).map((f) => (
+              <button
+                key={f}
+                type="button"
+                className={
+                  ownershipFilter === f
+                    ? 'badge preset-filled-primary-700-300 text-xs'
+                    : 'badge preset-tonal text-xs'
+                }
+                onClick={() => setOwnershipFilter(f)}
+              >
+                {f === 'all' ? 'All' : f === 'mine' ? 'Mine' : 'Shared with me'}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && (
           <div className="flex flex-col items-center gap-3 p-12 text-center">
             <p className="opacity-60">Loading connections…</p>
@@ -212,7 +240,16 @@ function Dashboard() {
             deletingId={deletingId}
             onEdit={(connection) => setFormMode(connection)}
             onDelete={handleDelete}
+            onShare={setShareTarget}
             onTagClick={setActiveTag}
+          />
+        )}
+
+        {shareTarget && (
+          <ShareDialog
+            connection={shareTarget}
+            onClose={() => setShareTarget(null)}
+            onChanged={loadConnections}
           />
         )}
       </main>
